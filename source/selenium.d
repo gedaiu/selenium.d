@@ -1,6 +1,8 @@
 module selenium;
 
+import core.vararg;
 import std.stdio;
+
 import vibe.d;
 
 import vibe.http.client;
@@ -129,6 +131,12 @@ struct Capabilities {
 	}
 }
 
+enum TimeoutType: string {
+	script = "script",
+	implicit = "implicit",
+	pageLoad = "page load"
+}
+
 struct SessionResponse(T) {
 
 	@optional {
@@ -142,27 +150,229 @@ struct SessionResponse(T) {
 	}
 }
 
+struct Size {
+	long width;
+	long height;
+}
+
+struct Position {
+	long x;
+	long y;
+}
+
 struct SeleniumSession {
 	string serverUrl;
 
 	Capabilities desiredCapabilities;
 	Capabilities requiredCapabilities;
+	Capabilities session;
 
-	auto url(string target) {
-		POST!"/url"(["url": target]);
-
+	auto timeouts(TimeoutType type, long ms) {
+		POST("/timeouts", ["type": Json(type), "ms": Json(ms)]);
 		return this;
 	}
 
-	string url() {
-		return GET!("/url", string);
+	auto timeoutsAsyncScript(long ms) {
+		POST("/timeouts/async_script", ["ms": Json(ms)]);
+		return this;
+	}
+
+	auto timeoutsImplicitWait(long ms) {
+		POST("/timeouts/implicit_wait", ["ms": Json(ms)]);
+		return this;
+	}
+	auto windowHandle() {
+		return GET!string("/window_handle");
+	}
+
+	auto windowHandles() {
+		return GET!(string[])("/window_handles");
+	}
+
+	auto url(string url) {
+		POST("/url", ["url": Json(url)]);
+		return this;
+	}
+
+	auto url() {
+		return GET!string("/url");
+	}
+
+	auto forward() {
+		POST("/forward");
+		return this;
+	}
+
+	auto back() {
+		POST("/back");
+		return this;
+	}
+
+	auto refresh() {
+		POST("/refresh");
+		return this;
+	}
+
+	auto execute(T = string)(string script, Json args = Json.emptyArray) {
+		return POST!T("/execute", [ "script": Json(script), "args": args ]);
+	}
+
+	auto executeAsync(T = string)(string script, Json args = Json.emptyArray) {
+		return POST!T("/execute_async", [ "script": Json(script), "args": args ]);
+	}
+
+	auto screenshot() {
+		return GET!string("/screenshot");
+	}
+
+	auto imeAvailableEngines() {
+		return GET!string("/ime/available_engines");
+	}
+
+	auto imeActiveEngine() {
+		return GET!string("/ime/active_engine");
+	}
+
+	auto imeActivated() {
+		return GET!bool("/ime/activated");
+	}
+
+	auto imeDeactivate() {
+		POST("/ime/deactivate");
+		return this;
+	}
+
+	auto imeActivate(string engine) {
+		POST("/ime/activate", ["engine": engine]);
+		return this;
+	}
+
+	auto frame(Json id = null) {
+		POST("/frame", ["id": id]);
+		return this;
+	}
+
+	auto frameParent() {
+		POST("/frame/parent");
+		return this;
+	}
+
+	auto selectWindow(string name) {
+		POST("/window", ["name": name]);
+		return this;
+	}
+
+	auto closeCurrentWindow() {
+		DELETE("/window");
+		return this;
+	}
+
+	auto windowSize(string handle, Size size) {
+		POST("/window/" ~ handle ~ "/size", size);
+		return this;
+	}
+
+	auto windowSize(string handle) {
+		return GET!Size("/window/" ~ handle ~ "/size");
+	}
+
+	auto windowPosition(string handle, Position position) {
+		POST("/window/" ~ handle ~ "/position", position);
+		return this;
+	}
+
+	auto windowPosition(string handle) {
+		return GET!Position("/window/" ~ handle ~ "/position");
+	}
+
+	auto windowMaximize(string handle) {
+		POST("/window/" ~ handle ~ "/maximize");
+		return this;
+	}
+
+	/*
+/session/:sessionId/cookie
+/session/:sessionId/cookie/:name
+/session/:sessionId/source
+/session/:sessionId/title
+/session/:sessionId/element
+/session/:sessionId/elements
+/session/:sessionId/element/active
+/session/:sessionId/element/:id
+/session/:sessionId/element/:id/element
+/session/:sessionId/element/:id/elements
+/session/:sessionId/element/:id/click
+/session/:sessionId/element/:id/submit
+/session/:sessionId/element/:id/text
+/session/:sessionId/element/:id/value
+/session/:sessionId/keys
+/session/:sessionId/element/:id/name
+/session/:sessionId/element/:id/clear
+/session/:sessionId/element/:id/selected
+/session/:sessionId/element/:id/enabled
+/session/:sessionId/element/:id/attribute/:name
+/session/:sessionId/element/:id/equals/:other
+/session/:sessionId/element/:id/displayed
+/session/:sessionId/element/:id/location
+/session/:sessionId/element/:id/location_in_view
+/session/:sessionId/element/:id/size
+/session/:sessionId/element/:id/css/:propertyName
+/session/:sessionId/orientation
+/session/:sessionId/alert_text
+/session/:sessionId/accept_alert
+/session/:sessionId/dismiss_alert
+/session/:sessionId/moveto
+/session/:sessionId/click
+/session/:sessionId/buttondown
+/session/:sessionId/buttonup
+/session/:sessionId/doubleclick
+/session/:sessionId/touch/click
+/session/:sessionId/touch/down
+/session/:sessionId/touch/up
+session/:sessionId/touch/move
+session/:sessionId/touch/scroll
+session/:sessionId/touch/scroll
+session/:sessionId/touch/doubleclick
+session/:sessionId/touch/longclick
+session/:sessionId/touch/flick
+session/:sessionId/touch/flick
+/session/:sessionId/location
+/session/:sessionId/local_storage
+/session/:sessionId/local_storage/key/:key
+/session/:sessionId/local_storage/size
+/session/:sessionId/session_storage
+/session/:sessionId/session_storage/key/:key
+/session/:sessionId/session_storage/size
+/session/:sessionId/log
+/session/:sessionId/log/types
+/session/:sessionId/application_cache/status*/
+
+
+	auto wait(long ms) {
+		sleep(ms.msecs);
+		return this;
+	}
+
+	void disconnect() {
+		if(isConnected) {
+
+			makeRequest(HTTPMethod.DELETE,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid);
+		}
 	}
 
 	private {
 		bool isConnected;
-		Capabilities session;
 
-		void POST(string path, T)(T values) {
+		void DELETE(T)(string path, T values = null) {
+			if(!isConnected) connect;
+
+			makeRequest(HTTPMethod.DELETE,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
+									values);
+		}
+
+		void POST(T)(string path, T values) {
 			if(!isConnected) connect;
 
 			makeRequest(HTTPMethod.POST,
@@ -170,7 +380,30 @@ struct SeleniumSession {
 									values);
 		}
 
-		T GET(string path, T)() {
+		void POST(string path) {
+			if(!isConnected) connect;
+
+			makeRequest(HTTPMethod.POST,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path);
+		}
+
+		auto POST(U, T)(string path, T values) {
+			if(!isConnected) connect;
+
+			return makeRequest(HTTPMethod.POST,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
+									values).deserializeJson!(SessionResponse!U).value;
+		}
+
+		auto POST(U)(string path) {
+			if(!isConnected) connect;
+
+			return makeRequest(HTTPMethod.POST,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path)
+									.deserializeJson!(SessionResponse!U).value;
+		}
+
+		T GET(T)(string path) {
 			if(!isConnected) connect;
 
 			return makeRequest(HTTPMethod.GET, serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path)
@@ -186,7 +419,7 @@ struct SeleniumSession {
 	}
 }
 
-private Json makeRequest(T)(HTTPMethod method, string path, T data = null) {
+private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 	import vibe.core.core : sleep;
 	import core.time : msecs;
 	import std.conv : to;
@@ -199,10 +432,37 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data = null) {
 	requestHTTP(path,
 		(scope req) {
 			req.method = method;
+			req.writeJsonBody(data);
+		},
+		(scope res) {
+			result = res.readJson;
 
-			if(data !is null) {
-				req.writeJsonBody(data);
+			if(res.statusCode == 500) {
+				throw new SeleniumException(result);
+			} else {
+				logInfo("Response: %d %s", res.statusCode, result.toPrettyString);
 			}
+			done = true;
+		}
+	);
+
+	return result;
+}
+
+
+private Json makeRequest(HTTPMethod method, string path) {
+	import vibe.core.core : sleep;
+	import core.time : msecs;
+	import std.conv : to;
+
+	Json result;
+	bool done = false;
+
+	logInfo("REQUEST: %s %s", method, path);
+
+	requestHTTP(path,
+		(scope req) {
+			req.method = method;
 		},
 		(scope res) {
 			result = res.readJson;
