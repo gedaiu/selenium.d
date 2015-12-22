@@ -1,0 +1,12 @@
+{
+	"name": "selenium-d",
+	"description": "D Selenium bindings",
+	"copyright": "Copyright © 2015, Szabo Bogdan",
+	"authors": ["Szabo Bogdan"],
+
+	"dependencies": {
+		"vibe-d": "~>0.7.26"
+	},
+
+	"versions": ["VibeCustomMain"]
+}
