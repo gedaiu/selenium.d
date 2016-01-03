@@ -7,6 +7,11 @@ import vibe.d;
 
 import vibe.http.client;
 import vibe.data.json;
+import std.typecons;
+
+//hack for development dub
+alias Nint = Nullable!int;
+Nint a;
 
 /// https://code.google.com/p/selenium/wiki/JsonWireProtocol#/session/:sessionId/url
 
@@ -18,11 +23,11 @@ class SeleniumException : Exception {
 	 * Create the exception
 	 */
 	this(string msg, string file = __FILE__, ulong line = cast(ulong)__LINE__, Throwable next = null) {
-		super(msg, file, line, next);
+		super(msg);
 	}
 
 	this(Json data, string file = __FILE__, ulong line = cast(ulong)__LINE__, Throwable next = null) {
-		super("Selenium server error: " ~ data.value.message.to!string, file, line, next);
+		super("Selenium server error: " ~ data.value.message.to!string);
 	}
 }
 
@@ -160,6 +165,19 @@ struct Position {
 	long y;
 }
 
+struct Cookie {
+	string name;
+	string value;
+
+	@optional {
+		string path;
+		string domain;
+		bool secure;
+		bool httpOnly;
+		long expiry;
+	}
+}
+
 struct SeleniumSession {
 	string serverUrl;
 
@@ -290,8 +308,26 @@ struct SeleniumSession {
 		return this;
 	}
 
+	auto cookie() {
+		return GET!(Cookie[])("/cookie");
+	}
+
+	auto setCookie(Cookie cookie) {
+		struct Body {
+			Cookie cookie;
+		}
+
+		POST("/cookie", Body(cookie));
+		return this;
+	}
+
+	auto deleteAllCookies() {
+		DELETE("/cookie");
+		return this;
+	}
+
+
 	/*
-/session/:sessionId/cookie
 /session/:sessionId/cookie/:name
 /session/:sessionId/source
 /session/:sessionId/title
@@ -370,6 +406,13 @@ session/:sessionId/touch/flick
 			makeRequest(HTTPMethod.DELETE,
 									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
 									values);
+		}
+
+		void DELETE(string path) {
+			if(!isConnected) connect;
+
+			makeRequest(HTTPMethod.DELETE,
+									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path);
 		}
 
 		void POST(T)(string path, T values) {

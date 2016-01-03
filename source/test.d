@@ -1,4 +1,4 @@
-module seleniumTests;
+module test;
 
 import selenium;
 import std.stdio;
@@ -35,7 +35,7 @@ unittest {
   assert(session.executeAsync!int("arguments[0](1+1)") == 2);
   assert(session.executeAsync!int("arguments[2](arguments[0] + arguments[1])", params) == 3);
 
-  writeln("screenshot: ", session.screenshot);
+  session.screenshot;
 
   /* not suported by chrome
   writeln("available_engines: ", session.imeAvailableEngines);
@@ -57,6 +57,11 @@ unittest {
   assert(session.windowSize(handle) != Size(400, 500));
   assert(session.windowPosition(handle) != Position(100, 200));
 
-  
+  assert(session.cookie.length > 0);
+
+  auto cookie = Cookie("test", "value");
+  session.setCookie(cookie);
+  session.deleteAllCookies;
+
   session.disconnect;
 }
