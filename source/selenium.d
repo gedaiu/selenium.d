@@ -178,6 +178,15 @@ struct Cookie {
 	}
 }
 
+struct ElementLocator {
+	LocatorStrategy using;
+	string value;
+}
+
+struct WebElement {
+	string ELEMENT;
+}
+
 struct SeleniumSession {
 	string serverUrl;
 
@@ -326,14 +335,35 @@ struct SeleniumSession {
 		return this;
 	}
 
+  auto deleteCookie(string name) {
+		DELETE("/cookie/" ~ name);
+		return this;
+	}
 
+	auto source() {
+		return GET!string("/source");
+	}
+
+	auto title() {
+		return GET!string("/title");
+	}
+
+	auto element(ElementLocator elem) {
+		return POST!WebElement("/element", elem);
+	}
+
+	auto elements(ElementLocator elem) {
+		return POST!(WebElement[])("/elements", elem);
+	}
+
+	auto activeElement() {
+		return POST!WebElement("/element/active");
+	}
+
+	auto elementFromElement(string initialElem, ElementLocator elem) {
+		return POST!WebElement("/element/" ~ initialElem ~ "/element", elem);
+	}
 	/*
-/session/:sessionId/cookie/:name
-/session/:sessionId/source
-/session/:sessionId/title
-/session/:sessionId/element
-/session/:sessionId/elements
-/session/:sessionId/element/active
 /session/:sessionId/element/:id
 /session/:sessionId/element/:id/element
 /session/:sessionId/element/:id/elements
@@ -470,7 +500,7 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 	Json result;
 	bool done = false;
 
-	logInfo("REQUEST: %s %s %s", method, path, data.to!string);
+	logInfo("REQUEST: %s %s %s", method, path, data.serializeToJson.toPrettyString);
 
 	requestHTTP(path,
 		(scope req) {

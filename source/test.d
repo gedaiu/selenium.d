@@ -11,7 +11,7 @@ unittest {
   auto url2 = "http://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
   auto session = SeleniumSession("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
-
+/+
   session.timeouts(TimeoutType.script, 10_000);
   session.timeouts(TimeoutType.implicit, 10_000);
   session.timeouts(TimeoutType.pageLoad, 10_000);
@@ -61,7 +61,23 @@ unittest {
 
   auto cookie = Cookie("test", "value");
   session.setCookie(cookie);
+  session.deleteCookie("test");
   session.deleteAllCookies;
++/
+  assert(session.source != "");
+  session.url("http://wfmu.org/playlists/LM");
+  assert(session.title == "WFMU: This Is The Modern World with Trouble: Playlists and Archives");
+  auto elem = ElementLocator(LocatorStrategy.ClassName, "ui-dialog");
+  session.element(elem);
+  auto elem2 = ElementLocator(LocatorStrategy.CssSelector, ".showList ul");
+  session.elements(elem2);
+  session.element(elem2);
+
+  auto elem3 = ElementLocator(LocatorStrategy.TagName, "li");
+  session.elementFromElement(session.element(elem2).ELEMENT, elem3);
+
+  session.activeElement;
+
 
   session.disconnect;
 }
