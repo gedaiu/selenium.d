@@ -348,35 +348,85 @@ struct SeleniumSession {
 		return GET!string("/title");
 	}
 
-	auto element(ElementLocator elem) {
-		return POST!WebElement("/element", elem);
+	auto element(ElementLocator locator) {
+		return POST!WebElement("/element", locator);
 	}
 
-	auto elements(ElementLocator elem) {
-		return POST!(WebElement[])("/elements", elem);
+	auto elements(ElementLocator locator) {
+		return POST!(WebElement[])("/elements", locator);
 	}
 
 	auto activeElement() {
 		return POST!WebElement("/element/active");
 	}
 
-	auto elementFromElement(string initialElem, ElementLocator elem) {
-		return POST!WebElement("/element/" ~ initialElem ~ "/element", elem);
+	auto elementFromElement(string initialElemId, ElementLocator locator) {
+		return POST!WebElement("/element/" ~ initialElemId ~ "/element", locator);
 	}
+
+	auto elementsFromElement(string initialElemId, ElementLocator locator) {
+		return POST!(WebElement[])("/element/" ~ initialElemId ~ "/elements", locator);
+	}
+
+	auto clickElement(string elementId) {
+		POST("/element/" ~ elementId ~ "/click");
+		return this;
+	}
+
+	auto submitElement(string elementId) {
+		POST("/element/" ~ elementId ~ "/submit");
+		return this;
+	}
+
+	auto elementText(string elementId) {
+		return GET!string("/element/" ~ elementId ~ "/text");
+	}
+
+	auto sendKeys(string elementId, string[] value) {
+		struct Body {
+			string[] value;
+		}
+
+		POST("/element/" ~ elementId ~ "/value", Body(value));
+		return this;
+	}
+
+	auto sendKeysToActiveElement(string[] value) {
+		struct Body {
+			string[] value;
+		}
+
+		POST("/keys", Body(value));
+		return this;
+	}
+
+	auto elementName(string elementId) {
+		return GET!string("/element/" ~ elementId ~ "/name");
+	}
+
+	auto clearElementValue(string elementId) {
+		POST("/element/" ~ elementId ~ "/clear");
+		return this;
+	}
+
+	auto elementSelected(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/selected");
+	}
+
+	auto elementEnabled(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/enabled");
+	}
+
+	auto elementValue(string elementId, string attribute) {
+		return GET!string("/element/" ~ elementId ~ "/attribute/" ~ attribute);
+	}
+
+	auto elementEqualsOther(string firstElementId, string secondElementId) {
+		return GET!bool("/element/" ~ firstElementId ~ "/equals/" ~ secondElementId);
+	}
+
 	/*
 /session/:sessionId/element/:id
-/session/:sessionId/element/:id/element
-/session/:sessionId/element/:id/elements
-/session/:sessionId/element/:id/click
-/session/:sessionId/element/:id/submit
-/session/:sessionId/element/:id/text
-/session/:sessionId/element/:id/value
-/session/:sessionId/keys
-/session/:sessionId/element/:id/name
-/session/:sessionId/element/:id/clear
-/session/:sessionId/element/:id/selected
-/session/:sessionId/element/:id/enabled
-/session/:sessionId/element/:id/attribute/:name
 /session/:sessionId/element/:id/equals/:other
 /session/:sessionId/element/:id/displayed
 /session/:sessionId/element/:id/location

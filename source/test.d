@@ -74,10 +74,45 @@ unittest {
   session.element(elem2);
 
   auto elem3 = ElementLocator(LocatorStrategy.TagName, "li");
-  session.elementFromElement(session.element(elem2).ELEMENT, elem3);
+  session.elementsFromElement(session.element(elem2).ELEMENT, elem3);
 
   session.activeElement;
 
+  auto elem4 = ElementLocator(LocatorStrategy.LinkText, "See the playlist");
+  session.clickElement(session.element(elem4).ELEMENT);
+  assert(session.url == "http://wfmu.org/playlists/shows/64336");
 
-  session.disconnect;
+  session.url("http://szabobogdan.com/ro.php");
+/+  auto elem5 = ElementLocator(LocatorStrategy.ClassName, "mailForm");
+  session.submitElement(session.element(elem5).ELEMENT);
++/
+  auto elem6 = ElementLocator(LocatorStrategy.CssSelector, "#contact h2");
+  assert(session.elementText(session.element(elem6).ELEMENT) == "Contact");
+
+  auto elem7 = ElementLocator(LocatorStrategy.Id, "formName");
+  auto idElem7 = session.element(elem7).ELEMENT;
+  session.sendKeys(idElem7, ["a", "l", "e"]);
+
+  session.sendKeysToActiveElement(["2", "t"]);
+
+  session.elementValue(idElem7, "value");
+
+  assert(session.elementName(idElem7) == "input");
+
+  session.clearElementValue(idElem7);
+  assert(session.elementValue(idElem7, "value") == "");
+
+  session.url(url1);
+  auto elem8 = ElementLocator(LocatorStrategy.CssSelector, "#quantity option");
+  auto idElem8 = session.element(elem8).ELEMENT;
+  assert(session.elementSelected(idElem8));
+
+  assert(session.elementEnabled(idElem8));
+
+  auto elem9 = ElementLocator(LocatorStrategy.CssSelector, "#quantity");
+  auto elem9bis = ElementLocator(LocatorStrategy.XPath, ".//*[@id='quantity']");
+  auto idElem9 = session.element(elem9).ELEMENT;
+  auto idElem9bis = session.element(elem9bis).ELEMENT;
+  assert(session.elementEqualsOther(idElem9, idElem9bis));
+  //session.disconnect;
 }
