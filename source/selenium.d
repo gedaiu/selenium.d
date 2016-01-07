@@ -147,6 +147,12 @@ enum Orientation: string {
 	portrait = "PORTRAIT"
 }
 
+enum MouseButton: int {
+	left = 0,
+	middle = 1,
+	right = 2
+}
+
 struct SessionResponse(T) {
 
 	@optional {
@@ -190,6 +196,12 @@ struct ElementLocator {
 
 struct WebElement {
 	string ELEMENT;
+}
+
+struct GeoLocation(T) {
+	T latitude;
+	T longitude;
+	T altitude;
 }
 
 struct SeleniumSession {
@@ -476,29 +488,131 @@ struct SeleniumSession {
 		return this;
 	}
 
+	auto acceptAlert() {
+		POST("/accept_alert");
+		return this;
+	}
 
+	auto dismissAlert() {
+		POST("/dismiss_alert");
+		return this;
+	}
+
+	auto moveTo(Position position) {
+		POST("/moveto", ["xoffset": position.x, "yoffset": position.y]);
+		return this;
+	}
+
+	auto moveTo(string elementId) {
+		POST("/moveto", ["element": elementId]);
+		return this;
+	}
+
+	auto moveTo(string elementId, Position position) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+		}
+
+		POST("/moveto", Body(elementId, position.x, position.y));
+		return this;
+	}
+
+	auto click(MouseButton button = MouseButton.left) {
+		POST("/click", ["button": button]);
+		return this;
+	}
+
+	auto buttonDown(MouseButton button = MouseButton.left) {
+		POST("/buttondown", ["button": button]);
+		return this;
+	}
+
+	auto buttonUp(MouseButton button = MouseButton.left) {
+		POST("/buttonup", ["button": button]);
+		return this;
+	}
+
+	auto doubleClick() {
+		POST("/doubleclick");
+		return this;
+	}
+
+	auto touchClick(string elementId) {
+		POST("/touch/click", ["element": elementId]);
+		return this;
+	}
+
+	auto touchDown(Position position) {
+		POST("/touch/down", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchUp(Position position) {
+		POST("/touch/up", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchMove(Position position) {
+		POST("/touch/move", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchScroll(string elementId, Position position) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+		}
+
+		POST("/touch/scroll", Body(elementId, position.x, position.y));
+		return this;
+	}
+
+	auto touchScroll(Position position) {
+		POST("/touch/scroll", ["xoffset": position.x, "yoffset": position.y]);
+		return this;
+	}
+
+	auto touchDoubleClick(string elementId) {
+		POST("/touch/doubleclick", ["element": elementId]);
+		return this;
+	}
+
+	auto touchLongClick(string elementId) {
+		POST("/touch/longclick", ["element": elementId]);
+		return this;
+	}
+
+	auto touchFlick(string elementId, Position position, long speed) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+			long speed;
+		}
+
+		POST("/touch/flick", Body(elementId, position.x, position.y, speed));
+		return this;
+	}
+
+	auto touchFlick(long xSpeed, long ySpeed) {
+		POST("/touch/flick", [ "xspeed": xSpeed, "yspeed": ySpeed ]);
+		return this;
+	}
+
+	auto geoLocation() {
+		return GET!(GeoLocation!double)("/location");
+	}
+
+	auto setGeoLocation(T)(T location) {
+		POST("/location", ["location": location]);
+		return this;
+	}
 	/*
 /session/:sessionId/element/:id - not yet implemented in Selenium
 
-/session/:sessionId/alert_text
-/session/:sessionId/accept_alert
-/session/:sessionId/dismiss_alert
-/session/:sessionId/moveto
-/session/:sessionId/click
-/session/:sessionId/buttondown
-/session/:sessionId/buttonup
-/session/:sessionId/doubleclick
-/session/:sessionId/touch/click
-/session/:sessionId/touch/down
-/session/:sessionId/touch/up
-session/:sessionId/touch/move
-session/:sessionId/touch/scroll
-session/:sessionId/touch/scroll
-session/:sessionId/touch/doubleclick
-session/:sessionId/touch/longclick
-session/:sessionId/touch/flick
-session/:sessionId/touch/flick
-/session/:sessionId/location
 /session/:sessionId/local_storage
 /session/:sessionId/local_storage/key/:key
 /session/:sessionId/local_storage/size

@@ -107,7 +107,7 @@ unittest {
 
   session.clearElementValue(idElem7);
   assert(session.elementValue(idElem7, "value") == "");
-
+*/
   session.url(url1);
   auto elem8 = ElementLocator(LocatorStrategy.CssSelector, "#quantity option");
   auto idElem8 = session.element(elem8).ELEMENT;
@@ -127,14 +127,45 @@ unittest {
   session.elementLocationInView(idElem9);
   session.elementSize(idElem9);
   session.elementCssPropertyName(idElem9, "display");
-*/
+
   //session.setOrientation(Orientation.landscape);
   //assert(session.orientation == Orientation.landscape);
-
+/*
+  session.executeAsync!string(`prompt("Please enter your name");`);
+  session.wait(1000);
+  session.setPromptText("test").acceptAlert;
 
   session.executeAsync!string(`prompt("Please enter your name");`);
   session.wait(1000);
-  session.setPromptText("test");
+  session.dismissAlert;*/
+
+  session.moveTo(Position(100, 100));
+  session.moveTo(idElem9);
+  session.moveTo(idElem9, Position(100, 100));
+
+  session.click(MouseButton.right);
+
+  session.buttonDown;
+  session.buttonUp;
+  session.doubleClick;
+
+/* It's not working with chrome driver. It's too advanced.
+  session.touchClick(idElem9);
+  session.touchDown(Position(100, 100));
+  session.touchUp(Position(100, 100));
+  session.touchMove(Position(200, 200));
+  session.touchScroll(idElem9, Position(200, 200));
+  session.touchScroll(Position(200, 200));
+  session.touchDoubleClick(idElem9);
+  session.touchLongClick(idElem9);
+  session.touchFlick(idElem9, Position(200, 200), 10);
+  session.touchFlick(100, 100);*/
+
+  session.setGeoLocation(GeoLocation!double(12.3, 13.3, 34.4))
+
+  //Web driver bug. It does not work.
+  //session.geoLocation();
+
 
   //session.disconnect;
 }
