@@ -11,11 +11,11 @@ unittest {
   auto url2 = "http://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
   auto session = SeleniumSession("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
-/+
+
   session.timeouts(TimeoutType.script, 10_000);
   session.timeouts(TimeoutType.implicit, 10_000);
   session.timeouts(TimeoutType.pageLoad, 10_000);
-
+/+
   string handle = session.windowHandle;
   writeln("windowHandle: ",  handle);
   writeln("windowHandles: ", session.windowHandles);
@@ -63,12 +63,15 @@ unittest {
   session.setCookie(cookie);
   session.deleteCookie("test");
   session.deleteAllCookies;
-+/
+
   assert(session.source != "");
+
   session.url("http://wfmu.org/playlists/LM");
   assert(session.title == "WFMU: This Is The Modern World with Trouble: Playlists and Archives");
+
   auto elem = ElementLocator(LocatorStrategy.ClassName, "ui-dialog");
   session.element(elem);
+
   auto elem2 = ElementLocator(LocatorStrategy.CssSelector, ".showList ul");
   session.elements(elem2);
   session.element(elem2);
@@ -78,14 +81,17 @@ unittest {
 
   session.activeElement;
 
-  auto elem4 = ElementLocator(LocatorStrategy.LinkText, "See the playlist");
+  auto elem4 = ElementLocator(LocatorStrategy.LinkText, "View Trouble's profile");
   session.clickElement(session.element(elem4).ELEMENT);
-  assert(session.url == "http://wfmu.org/playlists/shows/64336");
+  assert(session.url == "http://www.wfmu.org/profile/686399632/Trouble");
 
   session.url("http://szabobogdan.com/ro.php");
-/+  auto elem5 = ElementLocator(LocatorStrategy.ClassName, "mailForm");
-  session.submitElement(session.element(elem5).ELEMENT);
+  auto elem5 = ElementLocator(LocatorStrategy.ClassName, "mailForm");
+//  session.submitElement(session.element(elem5).ELEMENT);
+//  session.wait(1000);
+//  session.alertText();
 +/
+/*
   auto elem6 = ElementLocator(LocatorStrategy.CssSelector, "#contact h2");
   assert(session.elementText(session.element(elem6).ELEMENT) == "Contact");
 
@@ -114,5 +120,21 @@ unittest {
   auto idElem9 = session.element(elem9).ELEMENT;
   auto idElem9bis = session.element(elem9bis).ELEMENT;
   assert(session.elementEqualsOther(idElem9, idElem9bis));
+
+  assert(session.elementDisplayed(idElem9) == true);
+
+  session.elementLocation(idElem9);
+  session.elementLocationInView(idElem9);
+  session.elementSize(idElem9);
+  session.elementCssPropertyName(idElem9, "display");
+*/
+  //session.setOrientation(Orientation.landscape);
+  //assert(session.orientation == Orientation.landscape);
+
+
+  session.executeAsync!string(`prompt("Please enter your name");`);
+  session.wait(1000);
+  session.setPromptText("test");
+
   //session.disconnect;
 }

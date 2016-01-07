@@ -142,6 +142,11 @@ enum TimeoutType: string {
 	pageLoad = "page load"
 }
 
+enum Orientation: string {
+	landscape = "LANDSCAPE",
+	portrait = "PORTRAIT"
+}
+
 struct SessionResponse(T) {
 
 	@optional {
@@ -274,8 +279,13 @@ struct SeleniumSession {
 		return this;
 	}
 
-	auto frame(Json id = null) {
+	auto frame(string id) {
 		POST("/frame", ["id": id]);
+		return this;
+	}
+
+	auto frame(WebElement element) {
+		POST("/frame", element);
 		return this;
 	}
 
@@ -425,15 +435,51 @@ struct SeleniumSession {
 		return GET!bool("/element/" ~ firstElementId ~ "/equals/" ~ secondElementId);
 	}
 
+	auto elementDisplayed(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/displayed");
+	}
+
+	auto elementLocation(string elementId) {
+		return GET!Position("/element/" ~ elementId ~ "/location");
+	}
+
+	auto elementLocationInView(string elementId) {
+		return GET!Position("/element/" ~ elementId ~ "/location_in_view");
+	}
+
+	auto elementSize(string elementId) {
+		return GET!Size("/element/" ~ elementId ~ "/size");
+	}
+
+	auto elementCssPropertyName(string elementId, string propertyName) {
+		return GET!string("/element/" ~ elementId ~ "/css/" ~ propertyName);
+	}
+
+	auto orientation() {
+		return GET!Orientation("/orientation");
+	}
+
+	auto setOrientation(Orientation orientation) {
+		struct Body {
+			Orientation orientation;
+		}
+
+		return POST("/orientation", Body(orientation));
+	}
+
+	auto alertText() {
+		return GET!string("/alert_text");
+	}
+
+	auto setPromptText(string text) {
+		POST("/alert_text", ["text": text]);
+		return this;
+	}
+
+
 	/*
-/session/:sessionId/element/:id
-/session/:sessionId/element/:id/equals/:other
-/session/:sessionId/element/:id/displayed
-/session/:sessionId/element/:id/location
-/session/:sessionId/element/:id/location_in_view
-/session/:sessionId/element/:id/size
-/session/:sessionId/element/:id/css/:propertyName
-/session/:sessionId/orientation
+/session/:sessionId/element/:id - not yet implemented in Selenium
+
 /session/:sessionId/alert_text
 /session/:sessionId/accept_alert
 /session/:sessionId/dismiss_alert
