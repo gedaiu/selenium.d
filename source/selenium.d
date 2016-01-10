@@ -98,6 +98,48 @@ enum AlertBehaviour: string {
 	ignore = "ignore"
 }
 
+enum LogType: string {
+	client = "client",
+	driver = "driver",
+	browser = "browser",
+	server = "server"
+}
+
+enum TimeoutType: string {
+	script = "script",
+	implicit = "implicit",
+	pageLoad = "page load"
+}
+
+enum Orientation: string {
+	landscape = "LANDSCAPE",
+	portrait = "PORTRAIT"
+}
+
+enum MouseButton: int {
+	left = 0,
+	middle = 1,
+	right = 2
+}
+
+enum LogLevel: string {
+	ALL = "ALL",
+	DEBUG = "DEBUG",
+	INFO = "INFO",
+	WARNING = "WARNING",
+	SEVERE = "SEVERE",
+	OFF = "OFF"
+}
+
+enum CacheStatus {
+	uncached = 0,
+	idle = 1,
+	checking = 2,
+	downloading = 3,
+	update_ready = 4,
+	obsolete = 5
+}
+
 struct Capabilities {
 	@optional {
 		Browser browserName;
@@ -136,12 +178,6 @@ struct Capabilities {
 	}
 }
 
-enum TimeoutType: string {
-	script = "script",
-	implicit = "implicit",
-	pageLoad = "page load"
-}
-
 struct SessionResponse(T) {
 
 	@optional {
@@ -176,6 +212,27 @@ struct Cookie {
 		bool httpOnly;
 		long expiry;
 	}
+}
+
+struct ElementLocator {
+	LocatorStrategy using;
+	string value;
+}
+
+struct WebElement {
+	string ELEMENT;
+}
+
+struct GeoLocation(T) {
+	T latitude;
+	T longitude;
+	T altitude;
+}
+
+struct LogEntry {
+	long timestamp;
+	LogLevel level;
+	string message;
 }
 
 struct SeleniumSession {
@@ -265,8 +322,18 @@ struct SeleniumSession {
 		return this;
 	}
 
-	auto frame(Json id = null) {
+	auto frame(string id) {
 		POST("/frame", ["id": id]);
+		return this;
+	}
+
+	auto frame(long id) {
+		POST("/frame", ["id": id]);
+		return this;
+	}
+
+	auto frame(WebElement element) {
+		POST("/frame", element);
 		return this;
 	}
 
@@ -326,60 +393,329 @@ struct SeleniumSession {
 		return this;
 	}
 
+  auto deleteCookie(string name) {
+		DELETE("/cookie/" ~ name);
+		return this;
+	}
+
+	auto source() {
+		return GET!string("/source");
+	}
+
+	auto title() {
+		return GET!string("/title");
+	}
+
+	auto element(ElementLocator locator) {
+		return POST!WebElement("/element", locator);
+	}
+
+	auto elements(ElementLocator locator) {
+		return POST!(WebElement[])("/elements", locator);
+	}
+
+	auto activeElement() {
+		return POST!WebElement("/element/active");
+	}
+
+	auto elementFromElement(string initialElemId, ElementLocator locator) {
+		return POST!WebElement("/element/" ~ initialElemId ~ "/element", locator);
+	}
+
+	auto elementsFromElement(string initialElemId, ElementLocator locator) {
+		return POST!(WebElement[])("/element/" ~ initialElemId ~ "/elements", locator);
+	}
+
+	auto clickElement(string elementId) {
+		POST("/element/" ~ elementId ~ "/click");
+		return this;
+	}
+
+	auto submitElement(string elementId) {
+		POST("/element/" ~ elementId ~ "/submit");
+		return this;
+	}
+
+	auto elementText(string elementId) {
+		return GET!string("/element/" ~ elementId ~ "/text");
+	}
+
+	auto sendKeys(string elementId, string[] value) {
+		struct Body {
+			string[] value;
+		}
+
+		POST("/element/" ~ elementId ~ "/value", Body(value));
+		return this;
+	}
+
+	auto sendKeysToActiveElement(string[] value) {
+		struct Body {
+			string[] value;
+		}
+
+		POST("/keys", Body(value));
+		return this;
+	}
+
+	auto elementName(string elementId) {
+		return GET!string("/element/" ~ elementId ~ "/name");
+	}
+
+	auto clearElementValue(string elementId) {
+		POST("/element/" ~ elementId ~ "/clear");
+		return this;
+	}
+
+	auto elementSelected(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/selected");
+	}
+
+	auto elementEnabled(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/enabled");
+	}
+
+	auto elementValue(string elementId, string attribute) {
+		return GET!string("/element/" ~ elementId ~ "/attribute/" ~ attribute);
+	}
+
+	auto elementEqualsOther(string firstElementId, string secondElementId) {
+		return GET!bool("/element/" ~ firstElementId ~ "/equals/" ~ secondElementId);
+	}
+
+	auto elementDisplayed(string elementId) {
+		return GET!bool("/element/" ~ elementId ~ "/displayed");
+	}
+
+	auto elementLocation(string elementId) {
+		return GET!Position("/element/" ~ elementId ~ "/location");
+	}
+
+	auto elementLocationInView(string elementId) {
+		return GET!Position("/element/" ~ elementId ~ "/location_in_view");
+	}
+
+	auto elementSize(string elementId) {
+		return GET!Size("/element/" ~ elementId ~ "/size");
+	}
+
+	auto elementCssPropertyName(string elementId, string propertyName) {
+		return GET!string("/element/" ~ elementId ~ "/css/" ~ propertyName);
+	}
+
+	auto orientation() {
+		return GET!Orientation("/orientation");
+	}
+
+	auto setOrientation(Orientation orientation) {
+		struct Body {
+			Orientation orientation;
+		}
+
+		return POST("/orientation", Body(orientation));
+	}
+
+	auto alertText() {
+		return GET!string("/alert_text");
+	}
+
+	auto setPromptText(string text) {
+		POST("/alert_text", ["text": text]);
+		return this;
+	}
+
+	auto acceptAlert() {
+		POST("/accept_alert");
+		return this;
+	}
+
+	auto dismissAlert() {
+		POST("/dismiss_alert");
+		return this;
+	}
+
+	auto moveTo(Position position) {
+		POST("/moveto", ["xoffset": position.x, "yoffset": position.y]);
+		return this;
+	}
+
+	auto moveTo(string elementId) {
+		POST("/moveto", ["element": elementId]);
+		return this;
+	}
+
+	auto moveTo(string elementId, Position position) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+		}
+
+		POST("/moveto", Body(elementId, position.x, position.y));
+		return this;
+	}
+
+	auto click(MouseButton button = MouseButton.left) {
+		POST("/click", ["button": button]);
+		return this;
+	}
+
+	auto buttonDown(MouseButton button = MouseButton.left) {
+		POST("/buttondown", ["button": button]);
+		return this;
+	}
+
+	auto buttonUp(MouseButton button = MouseButton.left) {
+		POST("/buttonup", ["button": button]);
+		return this;
+	}
+
+	auto doubleClick() {
+		POST("/doubleclick");
+		return this;
+	}
+
+	auto touchClick(string elementId) {
+		POST("/touch/click", ["element": elementId]);
+		return this;
+	}
+
+	auto touchDown(Position position) {
+		POST("/touch/down", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchUp(Position position) {
+		POST("/touch/up", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchMove(Position position) {
+		POST("/touch/move", ["x": position.x, "y": position.y]);
+		return this;
+	}
+
+	auto touchScroll(string elementId, Position position) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+		}
+
+		POST("/touch/scroll", Body(elementId, position.x, position.y));
+		return this;
+	}
+
+	auto touchScroll(Position position) {
+		POST("/touch/scroll", ["xoffset": position.x, "yoffset": position.y]);
+		return this;
+	}
+
+	auto touchDoubleClick(string elementId) {
+		POST("/touch/doubleclick", ["element": elementId]);
+		return this;
+	}
+
+	auto touchLongClick(string elementId) {
+		POST("/touch/longclick", ["element": elementId]);
+		return this;
+	}
+
+	auto touchFlick(string elementId, Position position, long speed) {
+		struct Body {
+			string element;
+			long xoffset;
+			long yoffset;
+			long speed;
+		}
+
+		POST("/touch/flick", Body(elementId, position.x, position.y, speed));
+		return this;
+	}
+
+	auto touchFlick(long xSpeed, long ySpeed) {
+		POST("/touch/flick", [ "xspeed": xSpeed, "yspeed": ySpeed ]);
+		return this;
+	}
+
+	auto geoLocation() {
+		return GET!(GeoLocation!double)("/location");
+	}
+
+	auto setGeoLocation(T)(T location) {
+		POST("/location", ["location": location]);
+		return this;
+	}
+
+	auto localStorage() {
+		return GET!(string[])("/local_storage");
+	}
+
+	auto setLocalStorage(string key, string value) {
+		POST("/local_storage", ["key": key, "value": value]);
+		return this;
+	}
+
+	auto deleteLocalStorage() {
+		DELETE("/local_storage");
+		return this;
+	}
+
+	auto localStorage(string key) {
+		return GET!(string)("/local_storage/key/" ~ key);
+	}
+
+	auto deleteLocalStorage(string key) {
+		DELETE("/local_storage/key/" ~ key);
+		return this;
+	}
+
+	auto localStorageSize() {
+		return GET!(long)("/local_storage/size");
+	}
+
+	auto sessionStorage() {
+		return GET!(string[])("/session_storage");
+	}
+
+	auto setSessionStorage(string key, string value) {
+		POST("/session_storage", ["key": key, "value": value]);
+		return this;
+	}
+
+	auto deleteSessionStorage() {
+		DELETE("/session_storage");
+		return this;
+	}
+
+	auto sessionStorage(string key) {
+		return GET!(string)("/session_storage/key/" ~ key);
+	}
+
+	auto deleteSessionStorage(string key) {
+		DELETE("/session_storage/key/" ~ key);
+		return this;
+	}
+
+	auto sessionStorageSize() {
+		return GET!(long)("/session_storage/size");
+	}
+
+	auto log(LogType logType) {
+		return POST!(LogEntry[])("/log", ["type": logType]);
+	}
+
+	auto logTypes() {
+		return GET!(string[])("/log/types");
+	}
+
+	auto applicationCacheStatus() {
+		return GET!CacheStatus("/application_cache/status");
+	}
 
 	/*
-/session/:sessionId/cookie/:name
-/session/:sessionId/source
-/session/:sessionId/title
-/session/:sessionId/element
-/session/:sessionId/elements
-/session/:sessionId/element/active
-/session/:sessionId/element/:id
-/session/:sessionId/element/:id/element
-/session/:sessionId/element/:id/elements
-/session/:sessionId/element/:id/click
-/session/:sessionId/element/:id/submit
-/session/:sessionId/element/:id/text
-/session/:sessionId/element/:id/value
-/session/:sessionId/keys
-/session/:sessionId/element/:id/name
-/session/:sessionId/element/:id/clear
-/session/:sessionId/element/:id/selected
-/session/:sessionId/element/:id/enabled
-/session/:sessionId/element/:id/attribute/:name
-/session/:sessionId/element/:id/equals/:other
-/session/:sessionId/element/:id/displayed
-/session/:sessionId/element/:id/location
-/session/:sessionId/element/:id/location_in_view
-/session/:sessionId/element/:id/size
-/session/:sessionId/element/:id/css/:propertyName
-/session/:sessionId/orientation
-/session/:sessionId/alert_text
-/session/:sessionId/accept_alert
-/session/:sessionId/dismiss_alert
-/session/:sessionId/moveto
-/session/:sessionId/click
-/session/:sessionId/buttondown
-/session/:sessionId/buttonup
-/session/:sessionId/doubleclick
-/session/:sessionId/touch/click
-/session/:sessionId/touch/down
-/session/:sessionId/touch/up
-session/:sessionId/touch/move
-session/:sessionId/touch/scroll
-session/:sessionId/touch/scroll
-session/:sessionId/touch/doubleclick
-session/:sessionId/touch/longclick
-session/:sessionId/touch/flick
-session/:sessionId/touch/flick
-/session/:sessionId/location
-/session/:sessionId/local_storage
-/session/:sessionId/local_storage/key/:key
-/session/:sessionId/local_storage/size
-/session/:sessionId/session_storage
-/session/:sessionId/session_storage/key/:key
-/session/:sessionId/session_storage/size
-/session/:sessionId/log
+/session/:sessionId/element/:id - not yet implemented in Selenium
+
 /session/:sessionId/log/types
 /session/:sessionId/application_cache/status*/
 
@@ -470,7 +806,7 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 	Json result;
 	bool done = false;
 
-	logInfo("REQUEST: %s %s %s", method, path, data.to!string);
+	logInfo("REQUEST: %s %s %s", method, path, data.serializeToJson.toPrettyString);
 
 	requestHTTP(path,
 		(scope req) {
