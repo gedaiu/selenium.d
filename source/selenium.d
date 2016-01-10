@@ -98,6 +98,48 @@ enum AlertBehaviour: string {
 	ignore = "ignore"
 }
 
+enum LogType: string {
+	client = "client",
+	driver = "driver",
+	browser = "browser",
+	server = "server"
+}
+
+enum TimeoutType: string {
+	script = "script",
+	implicit = "implicit",
+	pageLoad = "page load"
+}
+
+enum Orientation: string {
+	landscape = "LANDSCAPE",
+	portrait = "PORTRAIT"
+}
+
+enum MouseButton: int {
+	left = 0,
+	middle = 1,
+	right = 2
+}
+
+enum LogLevel: string {
+	ALL = "ALL",
+	DEBUG = "DEBUG",
+	INFO = "INFO",
+	WARNING = "WARNING",
+	SEVERE = "SEVERE",
+	OFF = "OFF"
+}
+
+enum CacheStatus {
+	uncached = 0,
+	idle = 1,
+	checking = 2,
+	downloading = 3,
+	update_ready = 4,
+	obsolete = 5
+}
+
 struct Capabilities {
 	@optional {
 		Browser browserName;
@@ -134,23 +176,6 @@ struct Capabilities {
 
 		return capabilities;
 	}
-}
-
-enum TimeoutType: string {
-	script = "script",
-	implicit = "implicit",
-	pageLoad = "page load"
-}
-
-enum Orientation: string {
-	landscape = "LANDSCAPE",
-	portrait = "PORTRAIT"
-}
-
-enum MouseButton: int {
-	left = 0,
-	middle = 1,
-	right = 2
 }
 
 struct SessionResponse(T) {
@@ -202,6 +227,12 @@ struct GeoLocation(T) {
 	T latitude;
 	T longitude;
 	T altitude;
+}
+
+struct LogEntry {
+	long timestamp;
+	LogLevel level;
+	string message;
 }
 
 struct SeleniumSession {
@@ -292,6 +323,11 @@ struct SeleniumSession {
 	}
 
 	auto frame(string id) {
+		POST("/frame", ["id": id]);
+		return this;
+	}
+
+	auto frame(long id) {
 		POST("/frame", ["id": id]);
 		return this;
 	}
@@ -610,16 +646,76 @@ struct SeleniumSession {
 		POST("/location", ["location": location]);
 		return this;
 	}
+
+	auto localStorage() {
+		return GET!(string[])("/local_storage");
+	}
+
+	auto setLocalStorage(string key, string value) {
+		POST("/local_storage", ["key": key, "value": value]);
+		return this;
+	}
+
+	auto deleteLocalStorage() {
+		DELETE("/local_storage");
+		return this;
+	}
+
+	auto localStorage(string key) {
+		return GET!(string)("/local_storage/key/" ~ key);
+	}
+
+	auto deleteLocalStorage(string key) {
+		DELETE("/local_storage/key/" ~ key);
+		return this;
+	}
+
+	auto localStorageSize() {
+		return GET!(long)("/local_storage/size");
+	}
+
+	auto sessionStorage() {
+		return GET!(string[])("/session_storage");
+	}
+
+	auto setSessionStorage(string key, string value) {
+		POST("/session_storage", ["key": key, "value": value]);
+		return this;
+	}
+
+	auto deleteSessionStorage() {
+		DELETE("/session_storage");
+		return this;
+	}
+
+	auto sessionStorage(string key) {
+		return GET!(string)("/session_storage/key/" ~ key);
+	}
+
+	auto deleteSessionStorage(string key) {
+		DELETE("/session_storage/key/" ~ key);
+		return this;
+	}
+
+	auto sessionStorageSize() {
+		return GET!(long)("/session_storage/size");
+	}
+
+	auto log(LogType logType) {
+		return POST!(LogEntry[])("/log", ["type": logType]);
+	}
+
+	auto logTypes() {
+		return GET!(string[])("/log/types");
+	}
+
+	auto applicationCacheStatus() {
+		return GET!CacheStatus("/application_cache/status");
+	}
+
 	/*
 /session/:sessionId/element/:id - not yet implemented in Selenium
 
-/session/:sessionId/local_storage
-/session/:sessionId/local_storage/key/:key
-/session/:sessionId/local_storage/size
-/session/:sessionId/session_storage
-/session/:sessionId/session_storage/key/:key
-/session/:sessionId/session_storage/size
-/session/:sessionId/log
 /session/:sessionId/log/types
 /session/:sessionId/application_cache/status*/
 

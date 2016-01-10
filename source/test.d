@@ -15,7 +15,7 @@ unittest {
   session.timeouts(TimeoutType.script, 10_000);
   session.timeouts(TimeoutType.implicit, 10_000);
   session.timeouts(TimeoutType.pageLoad, 10_000);
-/+
+
   string handle = session.windowHandle;
   writeln("windowHandle: ",  handle);
   writeln("windowHandles: ", session.windowHandles);
@@ -45,7 +45,7 @@ unittest {
   writeln("active_engine: ", session.imeActivate);
   */
 
-  session.frame;
+  session.frame(1);
   //session.frameParent;
   //session.selectWindow("testOpen");
   //session.closeCurrentWindow();
@@ -83,15 +83,16 @@ unittest {
 
   auto elem4 = ElementLocator(LocatorStrategy.LinkText, "View Trouble's profile");
   session.clickElement(session.element(elem4).ELEMENT);
+  session.wait(1000);
   assert(session.url == "http://www.wfmu.org/profile/686399632/Trouble");
 
   session.url("http://szabobogdan.com/ro.php");
   auto elem5 = ElementLocator(LocatorStrategy.ClassName, "mailForm");
-//  session.submitElement(session.element(elem5).ELEMENT);
-//  session.wait(1000);
-//  session.alertText();
-+/
-/*
+  session.submitElement(session.element(elem5).ELEMENT);
+  session.wait(1000);
+  session.alertText();
+  session.acceptAlert();
+
   auto elem6 = ElementLocator(LocatorStrategy.CssSelector, "#contact h2");
   assert(session.elementText(session.element(elem6).ELEMENT) == "Contact");
 
@@ -107,7 +108,7 @@ unittest {
 
   session.clearElementValue(idElem7);
   assert(session.elementValue(idElem7, "value") == "");
-*/
+
   session.url(url1);
   auto elem8 = ElementLocator(LocatorStrategy.CssSelector, "#quantity option");
   auto idElem8 = session.element(elem8).ELEMENT;
@@ -130,14 +131,14 @@ unittest {
 
   //session.setOrientation(Orientation.landscape);
   //assert(session.orientation == Orientation.landscape);
-/*
+
   session.executeAsync!string(`prompt("Please enter your name");`);
   session.wait(1000);
   session.setPromptText("test").acceptAlert;
 
   session.executeAsync!string(`prompt("Please enter your name");`);
   session.wait(1000);
-  session.dismissAlert;*/
+  session.dismissAlert;
 
   session.moveTo(Position(100, 100));
   session.moveTo(idElem9);
@@ -161,11 +162,28 @@ unittest {
   session.touchFlick(idElem9, Position(200, 200), 10);
   session.touchFlick(100, 100);*/
 
-  session.setGeoLocation(GeoLocation!double(12.3, 13.3, 34.4))
+  session.setGeoLocation(GeoLocation!double(12.3, 13.3, 34.4));
 
   //Web driver bug. It does not work.
   //session.geoLocation();
 
+  session.setLocalStorage("key1", "val1");
+  session.localStorage();
+  session.localStorage("key1");
+  session.deleteLocalStorage("key1");
+  session.deleteLocalStorage();
+  session.localStorageSize();
 
-  //session.disconnect;
+  session.setSessionStorage("key2", "val2");
+  session.sessionStorage("key2");
+  session.sessionStorage();
+  session.deleteSessionStorage("key2");
+  session.deleteSessionStorage();
+
+  session.log(LogType.browser);
+  session.logTypes();
+
+  //session.applicationCacheStatus();
+
+  session.disconnect;
 }
