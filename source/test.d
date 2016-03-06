@@ -6,7 +6,7 @@ import vibe.data.json;
 
 import std.datetime;
 
-unittest {/+
+unittest {
   auto url1 = "http://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
   auto url2 = "http://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
@@ -50,12 +50,10 @@ unittest {/+
   //session.selectWindow("testOpen");
   //session.closeCurrentWindow();
 
-  assert(session.windowSize(handle, Size(400, 500)).windowSize(handle) == Size(400, 500));
-  assert(session.windowPosition(handle, Position(100, 200)).windowPosition(handle) == Position(100, 200));
+  assert(session.windowSize(Size(400, 500)).windowSize == Size(400, 500));
 
-  session.windowMaximize(handle);
-  assert(session.windowSize(handle) != Size(400, 500));
-  assert(session.windowPosition(handle) != Position(100, 200));
+  session.windowMaximize;
+  assert(session.windowSize != Size(400, 500));
 
   assert(session.cookie.length > 0);
 
@@ -185,5 +183,5 @@ unittest {/+
 
   //session.applicationCacheStatus();
 
-  session.disconnect;+/
+  session.disconnect;
 }

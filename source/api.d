@@ -352,26 +352,17 @@ struct SeleniumApi {
 		return this;
 	}
 
-	auto windowSize(string handle, Size size) {
-		POST("/window/" ~ handle ~ "/size", size);
+	auto windowSize(Size size) {
+		POST("/window/size", size);
 		return this;
 	}
 
-	auto windowSize(string handle) {
-		return GET!Size("/window/" ~ handle ~ "/size");
+	auto windowSize() {
+		return GET!Size("/window/size");
 	}
 
-	auto windowPosition(string handle, Position position) {
-		POST("/window/" ~ handle ~ "/position", position);
-		return this;
-	}
-
-	auto windowPosition(string handle) {
-		return GET!Position("/window/" ~ handle ~ "/position");
-	}
-
-	auto windowMaximize(string handle) {
-		POST("/window/" ~ handle ~ "/maximize");
+	auto windowMaximize() {
+		POST("/window/maximize");
 		return this;
 	}
 

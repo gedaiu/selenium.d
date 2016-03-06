@@ -4,7 +4,6 @@ import selenium.api;
 
 
 class SeleniumSession {
-
   SeleniumApi api;
 
   this(string serverUrl,
@@ -18,12 +17,14 @@ class SeleniumSession {
   SeleniumWindow currentWindow() {
     return new SeleniumWindow(api.windowHandle, api);
   }
-
 }
 
 class SeleniumWindow {
-  string handle;
-  SeleniumApi api;
+
+  protected {
+    string handle;
+    SeleniumApi api;
+  }
 
   this(string handle, SeleniumApi api) {
     this.handle = handle;
@@ -31,23 +32,15 @@ class SeleniumWindow {
   }
 
   Size size() {
-    return api.windowSize(handle);
+    return api.windowSize;
   }
 
   void size(Size value) {
-    api.windowSize(handle, value);
-  }
-
-  Position position() {
-    return api.windowPosition(handle);
-  }
-
-  void position(Position value) {
-    api.windowPosition(handle, value);
+    api.windowSize(value);
   }
 
   void maximize() {
-    api.windowMaximize(handle);
+    api.windowMaximize;
   }
 }
 
@@ -56,9 +49,6 @@ unittest {
 
   session.currentWindow.size = Size(400, 500);
   assert(session.currentWindow.size == Size(400, 500));
-
-  session.currentWindow.position = Position(100, 200);
-  assert(session.currentWindow.position == Position(100, 200));
 
   session.currentWindow.maximize;
 }
