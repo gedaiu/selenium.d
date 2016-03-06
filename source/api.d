@@ -235,12 +235,23 @@ struct LogEntry {
 	string message;
 }
 
-struct SeleniumApi {
+class SeleniumApi {
 	string serverUrl;
 
 	Capabilities desiredCapabilities;
 	Capabilities requiredCapabilities;
 	Capabilities session;
+
+	this(string serverUrl,
+      Capabilities desiredCapabilities,
+      Capabilities requiredCapabilities = Capabilities(),
+      Capabilities session = Capabilities()) {
+
+		this.serverUrl = serverUrl;
+		this.desiredCapabilities = desiredCapabilities;
+		this.requiredCapabilities = requiredCapabilities;
+		this.session = session;
+	}
 
 	auto timeouts(TimeoutType type, long ms) {
 		POST("/timeouts", ["type": Json(type), "ms": Json(ms)]);
@@ -347,7 +358,7 @@ struct SeleniumApi {
 		return this;
 	}
 
-	auto closeCurrentWindow() {
+	auto windowClose() {
 		DELETE("/window");
 		return this;
 	}

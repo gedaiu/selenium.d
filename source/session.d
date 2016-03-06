@@ -1,6 +1,7 @@
 module selenium.session;
 
 import selenium.api;
+import std.stdio;
 
 
 class SeleniumSession {
@@ -11,27 +12,24 @@ class SeleniumSession {
       Capabilities requiredCapabilities = Capabilities(),
       Capabilities session = Capabilities()) {
 
-    api = SeleniumApi(serverUrl, desiredCapabilities, requiredCapabilities, session);
+    api = new SeleniumApi(serverUrl, desiredCapabilities, requiredCapabilities, session);
   }
 
   SeleniumWindow currentWindow() {
-    return new SeleniumWindow(api.windowHandle, api);
+    return new SeleniumWindow(api);
   }
 }
 
 class SeleniumWindow {
-
   protected {
-    string handle;
     SeleniumApi api;
   }
 
-  this(string handle, SeleniumApi api) {
-    this.handle = handle;
+  this(SeleniumApi api) {
     this.api = api;
   }
 
-  Size size() {
+  auto size() {
     return api.windowSize;
   }
 
@@ -42,6 +40,22 @@ class SeleniumWindow {
   void maximize() {
     api.windowMaximize;
   }
+
+  auto screenshot() {
+    api.screenshot;
+  }
+
+  void close() {
+    api.windowClose;
+  }
+
+  auto source() {
+    api.source;
+  }
+
+  auto title() {
+    api.title;
+  }
 }
 
 unittest {
@@ -51,4 +65,10 @@ unittest {
   assert(session.currentWindow.size == Size(400, 500));
 
   session.currentWindow.maximize;
+
+  session.currentWindow.screenshot;
+  session.currentWindow.source;
+  session.currentWindow.title;
+
+  session.currentWindow.close;
 }
