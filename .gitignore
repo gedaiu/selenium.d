@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+*.o
+*.obj
+
+bin/Debug/selenium
+
+dub.selections.json
+
+dub.userprefs
+
+selenium.dproj
+
+selenium-d
+
+selenium

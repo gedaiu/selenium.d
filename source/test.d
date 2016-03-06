@@ -1,6 +1,6 @@
 module test;
 
-import selenium;
+import selenium.api;
 import std.stdio;
 import vibe.data.json;
 
@@ -10,7 +10,7 @@ unittest {
   auto url1 = "http://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
   auto url2 = "http://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
-  auto session = SeleniumSession("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
+  auto session = SeleniumApi("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
 
   session.timeouts(TimeoutType.script, 10_000);
   session.timeouts(TimeoutType.implicit, 10_000);

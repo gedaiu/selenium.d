@@ -1,4 +1,4 @@
-module selenium;
+module selenium.api;
 
 import core.vararg;
 import std.stdio;
@@ -235,7 +235,7 @@ struct LogEntry {
 	string message;
 }
 
-struct SeleniumSession {
+struct SeleniumApi {
 	string serverUrl;
 
 	Capabilities desiredCapabilities;
@@ -393,7 +393,7 @@ struct SeleniumSession {
 		return this;
 	}
 
-  auto deleteCookie(string name) {
+	auto deleteCookie(string name) {
 		DELETE("/cookie/" ~ name);
 		return this;
 	}
