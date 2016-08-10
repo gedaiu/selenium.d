@@ -88,30 +88,38 @@ class Element
 {
 	alias opEquals = Object.opEquals;
 
-	private SeleniumApi api;
-	private WebElement element;
+	private const {
+		SeleniumApi api;
+		WebElement element;
+	}
 
-	this(SeleniumApi api, WebElement element) {
+	this(SeleniumApi api, WebElement element)
+	{
 		this.api = api;
 		this.element = element;
 	}
 
-	static {
-		Element findOne(SeleniumApi api, ElementLocator locator) {
+	static
+	{
+		Element findOne(SeleniumApi api, ElementLocator locator)
+		{
 			return new Element(api, api.element(locator));
 		}
 
-		Element[] findMany(SeleniumApi api, ElementLocator locator) {
+		Element[] findMany(SeleniumApi api, ElementLocator locator)
+		{
 			Element[] elements;
 
-			foreach(webElement; api.elements(locator)) {
+			foreach (webElement; api.elements(locator))
+			{
 				elements ~= new Element(api, webElement);
 			}
 
 			return elements;
 		}
 
-		Element getActive(SeleniumApi api) {
+		Element getActive(SeleniumApi api)
+		{
 			return new Element(api, api.activeElement);
 		}
 
@@ -121,93 +129,113 @@ class Element
 		}
 	}
 
-	Element findOne(ElementLocator locator) {
+	Element findOne(ElementLocator locator)
+	{
 		return new Element(api, api.elementFromElement(element.ELEMENT, locator));
 	}
 
-	Element[] findMany(ElementLocator locator) {
+	Element[] findMany(ElementLocator locator)
+	{
 		Element[] elements;
 
-		foreach(webElement; api.elementsFromElement(element.ELEMENT, locator)) {
+		foreach (webElement; api.elementsFromElement(element.ELEMENT, locator))
+		{
 			elements ~= new Element(api, webElement);
 		}
 
 		return elements;
 	}
 
-	Element click() {
+	Element click()
+	{
 		api.clickElement(element.ELEMENT);
 
 		return this;
 	}
 
-	Element submit() {
+	Element submit()
+	{
 		api.submitElement(element.ELEMENT);
 		return this;
 	}
 
-
-	Element sendKeys(string[] value) {
+	Element sendKeys(string[] value)
+	{
 		api.sendKeys(element.ELEMENT, value);
 		return this;
 	}
 
-	Element clear() {
+	Element clear()
+	{
 		api.clearElementValue(element.ELEMENT);
 		return this;
 	}
 
-	@property {
-		string text() {
+	@property
+	{
+		string text()
+		{
 			return api.elementText(element.ELEMENT);
 		}
 
-		string name() {
+		string name()
+		{
 			return api.elementName(element.ELEMENT);
 		}
 
-		bool isSelected() {
+		bool isSelected()
+		{
 			return api.elementSelected(element.ELEMENT);
 		}
 
-		bool isEnabled() {
+		bool isEnabled()
+		{
 			return api.elementSelected(element.ELEMENT);
 		}
 
-		bool isDisplayed() {
+		bool isDisplayed()
+		{
 			return api.elementDisplayed(element.ELEMENT);
 		}
 
-		Position position() {
+		Position position()
+		{
 			return api.elementLocation(element.ELEMENT);
 		}
 
-		Position positionInView() {
+		Position positionInView()
+		{
 			return api.elementLocationInView(element.ELEMENT);
 		}
 
-		Size size() {
+		Size size()
+		{
 			return api.elementSize(element.ELEMENT);
 		}
 
-		string seleniumId() inout {
+		string seleniumId() inout
+		{
 			return element.ELEMENT;
 		}
 	}
 
-	string attribute(string name) {
+	string attribute(string name)
+	{
 		return api.elementValue(element.ELEMENT, name);
 	}
 
-	string elementCssPropertyName(string name) {
+	string elementCssPropertyName(string name)
+	{
 		return api.elementValue(element.ELEMENT, name);
 	}
 
-	bool opEquals(ref Element other) {
+	bool opEquals(ref Element other) const
+	{
 		return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
 	}
 
-	bool opEquals(Element other) {
+	bool opEquals(Element other) const
+	{
 		return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
 	}
 }
