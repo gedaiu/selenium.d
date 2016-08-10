@@ -5,13 +5,14 @@ import std.stdio;
 
 class SeleniumSession
 {
-	SeleniumApi api;
+	immutable SeleniumApi api;
 
 	this(string serverUrl, Capabilities desiredCapabilities,
 			Capabilities requiredCapabilities = Capabilities(), Capabilities session = Capabilities())
 	{
 
-		api = new SeleniumApi(serverUrl, desiredCapabilities, requiredCapabilities, session);
+		auto connector = new SeleniumApiConnector(serverUrl, desiredCapabilities, requiredCapabilities, session);
+		api = connector.api;
 	}
 
 	SeleniumWindow currentWindow()
@@ -22,12 +23,12 @@ class SeleniumSession
 
 class SeleniumWindow
 {
-	protected
+	protected const
 	{
 		SeleniumApi api;
 	}
 
-	this(SeleniumApi api)
+	this(const SeleniumApi api)
 	{
 		this.api = api;
 	}
@@ -88,12 +89,12 @@ class Element
 {
 	alias opEquals = Object.opEquals;
 
-	private const {
+	private immutable {
 		SeleniumApi api;
 		WebElement element;
 	}
 
-	this(SeleniumApi api, WebElement element)
+	this(immutable SeleniumApi api, immutable WebElement element) immutable
 	{
 		this.api = api;
 		this.element = element;
@@ -101,141 +102,143 @@ class Element
 
 	static
 	{
-		Element findOne(SeleniumApi api, ElementLocator locator)
+		immutable(Element) findOne(immutable SeleniumApi api, immutable ElementLocator locator)
 		{
-			return new Element(api, api.element(locator));
+			return new immutable Element(api, api.element(locator));
 		}
 
-		Element[] findMany(SeleniumApi api, ElementLocator locator)
+		immutable(Element)[] findMany(immutable SeleniumApi api, immutable ElementLocator locator)
 		{
-			Element[] elements;
+			immutable(Element)[] elements;
 
 			foreach (webElement; api.elements(locator))
 			{
-				elements ~= new Element(api, webElement);
+				elements ~= new immutable Element(api, webElement);
 			}
 
 			return elements;
 		}
 
-		Element getActive(SeleniumApi api)
+		immutable(Element) getActive(immutable SeleniumApi api)
 		{
-			return new Element(api, api.activeElement);
+			return new immutable Element(api, api.activeElement);
 		}
 
-		void sendKeysToActive(SeleniumApi api, string[] value)
+		void sendKeysToActive(immutable SeleniumApi api, const string[] value)
 		{
 			api.sendKeysToActiveElement(value);
 		}
 	}
 
-	Element findOne(ElementLocator locator)
-	{
-		return new Element(api, api.elementFromElement(element.ELEMENT, locator));
-	}
-
-	Element[] findMany(ElementLocator locator)
-	{
-		Element[] elements;
-
-		foreach (webElement; api.elementsFromElement(element.ELEMENT, locator))
+	inout {
+		immutable(Element) findOne(ElementLocator locator)
 		{
-			elements ~= new Element(api, webElement);
+			return new immutable Element(api, api.elementFromElement(element.ELEMENT, locator));
 		}
 
-		return elements;
-	}
-
-	Element click()
-	{
-		api.clickElement(element.ELEMENT);
-
-		return this;
-	}
-
-	Element submit()
-	{
-		api.submitElement(element.ELEMENT);
-		return this;
-	}
-
-	Element sendKeys(string[] value)
-	{
-		api.sendKeys(element.ELEMENT, value);
-		return this;
-	}
-
-	Element clear()
-	{
-		api.clearElementValue(element.ELEMENT);
-		return this;
-	}
-
-	@property
-	{
-		string text()
+		immutable(Element)[] findMany(ElementLocator locator)
 		{
-			return api.elementText(element.ELEMENT);
+			immutable(Element)[] elements;
+
+			foreach (webElement; api.elementsFromElement(element.ELEMENT, locator))
+			{
+				elements ~= new immutable Element(api, webElement);
+			}
+
+			return elements;
 		}
 
-		string name()
+		inout(Element) click()
 		{
-			return api.elementName(element.ELEMENT);
+			api.clickElement(element.ELEMENT);
+
+			return this;
 		}
 
-		bool isSelected()
+		inout(Element) submit()
 		{
-			return api.elementSelected(element.ELEMENT);
+			api.submitElement(element.ELEMENT);
+			return this;
 		}
 
-		bool isEnabled()
+		inout(Element) sendKeys(string[] value)
 		{
-			return api.elementSelected(element.ELEMENT);
+			api.sendKeys(element.ELEMENT, value);
+			return this;
 		}
 
-		bool isDisplayed()
+		inout(Element) clear()
 		{
-			return api.elementDisplayed(element.ELEMENT);
+			api.clearElementValue(element.ELEMENT);
+			return this;
 		}
 
-		Position position()
+		@property
 		{
-			return api.elementLocation(element.ELEMENT);
+			string text()
+			{
+				return api.elementText(element.ELEMENT);
+			}
+
+			string name()
+			{
+				return api.elementName(element.ELEMENT);
+			}
+
+			bool isSelected()
+			{
+				return api.elementSelected(element.ELEMENT);
+			}
+
+			bool isEnabled()
+			{
+				return api.elementSelected(element.ELEMENT);
+			}
+
+			bool isDisplayed()
+			{
+				return api.elementDisplayed(element.ELEMENT);
+			}
+
+			Position position()
+			{
+				return api.elementLocation(element.ELEMENT);
+			}
+
+			Position positionInView()
+			{
+				return api.elementLocationInView(element.ELEMENT);
+			}
+
+			Size size()
+			{
+				return api.elementSize(element.ELEMENT);
+			}
+
+			string seleniumId() inout
+			{
+				return element.ELEMENT;
+			}
 		}
 
-		Position positionInView()
+		string attribute(string name)
 		{
-			return api.elementLocationInView(element.ELEMENT);
+			return api.elementValue(element.ELEMENT, name);
 		}
 
-		Size size()
+		string elementCssPropertyName(string name)
 		{
-			return api.elementSize(element.ELEMENT);
+			return api.elementValue(element.ELEMENT, name);
 		}
 
-		string seleniumId() inout
+		bool opEquals(ref Element other) const
 		{
-			return element.ELEMENT;
+			return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
 		}
-	}
 
-	string attribute(string name)
-	{
-		return api.elementValue(element.ELEMENT, name);
-	}
-
-	string elementCssPropertyName(string name)
-	{
-		return api.elementValue(element.ELEMENT, name);
-	}
-
-	bool opEquals(ref Element other) const
-	{
-		return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
-	}
-
-	bool opEquals(Element other) const
-	{
-		return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
+		bool opEquals(Element other) const
+		{
+			return api.elementEqualsOther(element.ELEMENT, other.seleniumId);
+		}
 	}
 }

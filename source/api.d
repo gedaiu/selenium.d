@@ -235,567 +235,577 @@ struct LogEntry {
 	string message;
 }
 
-class SeleniumApi {
-	string serverUrl;
+class SeleniumApiConnector {
+	const {
+		string serverUrl;
 
-	Capabilities desiredCapabilities;
-	Capabilities requiredCapabilities;
-	Capabilities session;
+		Capabilities desiredCapabilities;
+		Capabilities requiredCapabilities;
+		Capabilities session;
+		Capabilities responseSession;
+	}
 
-	this(string serverUrl,
-      Capabilities desiredCapabilities,
-      Capabilities requiredCapabilities = Capabilities(),
-      Capabilities session = Capabilities()) {
+	immutable {
+		SeleniumApiConnection connection;
+		SeleniumApi api;
+	}
+
+	this(const string serverUrl,
+      const Capabilities desiredCapabilities,
+      const Capabilities requiredCapabilities = Capabilities(),
+      const Capabilities session = Capabilities()) {
 
 		this.serverUrl = serverUrl;
 		this.desiredCapabilities = desiredCapabilities;
 		this.requiredCapabilities = requiredCapabilities;
 		this.session = session;
-	}
-
-	auto timeouts(TimeoutType type, long ms) {
-		POST("/timeouts", ["type": Json(type), "ms": Json(ms)]);
-		return this;
-	}
-
-	auto timeoutsAsyncScript(long ms) {
-		POST("/timeouts/async_script", ["ms": Json(ms)]);
-		return this;
-	}
-
-	auto timeoutsImplicitWait(long ms) {
-		POST("/timeouts/implicit_wait", ["ms": Json(ms)]);
-		return this;
-	}
-	auto windowHandle() {
-		return GET!string("/window_handle");
-	}
-
-	auto windowHandles() {
-		return GET!(string[])("/window_handles");
-	}
-
-	auto url(string url) {
-		POST("/url", ["url": Json(url)]);
-		return this;
-	}
-
-	auto url() {
-		return GET!string("/url");
-	}
-
-	auto forward() {
-		POST("/forward");
-		return this;
-	}
-
-	auto back() {
-		POST("/back");
-		return this;
-	}
-
-	auto refresh() {
-		POST("/refresh");
-		return this;
-	}
-
-	auto execute(T = string)(string script, Json args = Json.emptyArray) {
-		return POST!T("/execute", [ "script": Json(script), "args": args ]);
-	}
-
-	auto executeAsync(T = string)(string script, Json args = Json.emptyArray) {
-		return POST!T("/execute_async", [ "script": Json(script), "args": args ]);
-	}
-
-	auto screenshot() {
-		return GET!string("/screenshot");
-	}
-
-	auto imeAvailableEngines() {
-		return GET!string("/ime/available_engines");
-	}
-
-	auto imeActiveEngine() {
-		return GET!string("/ime/active_engine");
-	}
-
-	auto imeActivated() {
-		return GET!bool("/ime/activated");
-	}
-
-	auto imeDeactivate() {
-		POST("/ime/deactivate");
-		return this;
-	}
-
-	auto imeActivate(string engine) {
-		POST("/ime/activate", ["engine": engine]);
-		return this;
-	}
-
-	auto frame(string id) {
-		POST("/frame", ["id": id]);
-		return this;
-	}
-
-	auto frame(long id) {
-		POST("/frame", ["id": id]);
-		return this;
-	}
-
-	auto frame(WebElement element) {
-		POST("/frame", element);
-		return this;
-	}
-
-	auto frameParent() {
-		POST("/frame/parent");
-		return this;
-	}
-
-	auto selectWindow(string name) {
-		POST("/window", ["name": name]);
-		return this;
-	}
-
-	auto windowClose() {
-		DELETE("/window");
-		return this;
-	}
-
-	auto windowSize(Size size) {
-		POST("/window/size", size);
-		return this;
-	}
-
-	auto windowSize() {
-		return GET!Size("/window/size");
-	}
-
-	auto windowMaximize() {
-		POST("/window/maximize");
-		return this;
-	}
-
-	auto cookie() {
-		return GET!(Cookie[])("/cookie");
-	}
-
-	auto setCookie(Cookie cookie) {
-		struct Body {
-			Cookie cookie;
-		}
-
-		POST("/cookie", Body(cookie));
-		return this;
-	}
-
-	auto deleteAllCookies() {
-		DELETE("/cookie");
-		return this;
-	}
-
-	auto deleteCookie(string name) {
-		DELETE("/cookie/" ~ name);
-		return this;
-	}
-
-	auto source() {
-		return GET!string("/source");
-	}
-
-	auto title() {
-		return GET!string("/title");
-	}
-
-	auto element(ElementLocator locator) {
-		return POST!WebElement("/element", locator);
-	}
-
-	auto elements(ElementLocator locator) {
-		return POST!(WebElement[])("/elements", locator);
-	}
-
-	auto activeElement() {
-		return POST!WebElement("/element/active");
-	}
-
-	auto elementFromElement(string initialElemId, ElementLocator locator) {
-		return POST!WebElement("/element/" ~ initialElemId ~ "/element", locator);
-	}
-
-	auto elementsFromElement(string initialElemId, ElementLocator locator) {
-		return POST!(WebElement[])("/element/" ~ initialElemId ~ "/elements", locator);
-	}
-
-	auto clickElement(string elementId) {
-		POST("/element/" ~ elementId ~ "/click");
-		return this;
-	}
-
-	auto submitElement(string elementId) {
-		POST("/element/" ~ elementId ~ "/submit");
-		return this;
-	}
-
-	auto elementText(string elementId) {
-		return GET!string("/element/" ~ elementId ~ "/text");
-	}
-
-	auto sendKeys(string elementId, string[] value) {
-		struct Body {
-			string[] value;
-		}
-
-		POST("/element/" ~ elementId ~ "/value", Body(value));
-		return this;
-	}
-
-	auto sendKeysToActiveElement(string[] value) {
-		struct Body {
-			string[] value;
-		}
-
-		POST("/keys", Body(value));
-		return this;
-	}
-
-	auto elementName(string elementId) {
-		return GET!string("/element/" ~ elementId ~ "/name");
-	}
-
-	auto clearElementValue(string elementId) {
-		POST("/element/" ~ elementId ~ "/clear");
-		return this;
-	}
-
-	auto elementSelected(string elementId) {
-		return GET!bool("/element/" ~ elementId ~ "/selected");
-	}
-
-	auto elementEnabled(string elementId) {
-		return GET!bool("/element/" ~ elementId ~ "/enabled");
-	}
 
-	auto elementValue(string elementId, string attribute) {
-		return GET!string("/element/" ~ elementId ~ "/attribute/" ~ attribute);
-	}
-
-	auto elementEqualsOther(string firstElementId, string secondElementId) {
-		return GET!bool("/element/" ~ firstElementId ~ "/equals/" ~ secondElementId);
-	}
-
-	auto elementDisplayed(string elementId) {
-		return GET!bool("/element/" ~ elementId ~ "/displayed");
-	}
-
-	auto elementLocation(string elementId) {
-		return GET!Position("/element/" ~ elementId ~ "/location");
-	}
-
-	auto elementLocationInView(string elementId) {
-		return GET!Position("/element/" ~ elementId ~ "/location_in_view");
-	}
-
-	auto elementSize(string elementId) {
-		return GET!Size("/element/" ~ elementId ~ "/size");
-	}
-
-	auto elementCssPropertyName(string elementId, string propertyName) {
-		return GET!string("/element/" ~ elementId ~ "/css/" ~ propertyName);
-	}
-
-	auto orientation() {
-		return GET!Orientation("/orientation");
-	}
-
-	auto setOrientation(Orientation orientation) {
-		struct Body {
-			Orientation orientation;
-		}
-
-		return POST("/orientation", Body(orientation));
-	}
-
-	auto alertText() {
-		return GET!string("/alert_text");
-	}
-
-	auto setPromptText(string text) {
-		POST("/alert_text", ["text": text]);
-		return this;
-	}
-
-	auto acceptAlert() {
-		POST("/accept_alert");
-		return this;
-	}
-
-	auto dismissAlert() {
-		POST("/dismiss_alert");
-		return this;
-	}
-
-	auto moveTo(Position position) {
-		POST("/moveto", ["xoffset": position.x, "yoffset": position.y]);
-		return this;
-	}
-
-	auto moveTo(string elementId) {
-		POST("/moveto", ["element": elementId]);
-		return this;
-	}
-
-	auto moveTo(string elementId, Position position) {
-		struct Body {
-			string element;
-			long xoffset;
-			long yoffset;
-		}
-
-		POST("/moveto", Body(elementId, position.x, position.y));
-		return this;
-	}
-
-	auto click(MouseButton button = MouseButton.left) {
-		POST("/click", ["button": button]);
-		return this;
-	}
-
-	auto buttonDown(MouseButton button = MouseButton.left) {
-		POST("/buttondown", ["button": button]);
-		return this;
-	}
-
-	auto buttonUp(MouseButton button = MouseButton.left) {
-		POST("/buttonup", ["button": button]);
-		return this;
-	}
-
-	auto doubleClick() {
-		POST("/doubleclick");
-		return this;
-	}
-
-	auto touchClick(string elementId) {
-		POST("/touch/click", ["element": elementId]);
-		return this;
-	}
-
-	auto touchDown(Position position) {
-		POST("/touch/down", ["x": position.x, "y": position.y]);
-		return this;
-	}
-
-	auto touchUp(Position position) {
-		POST("/touch/up", ["x": position.x, "y": position.y]);
-		return this;
-	}
-
-	auto touchMove(Position position) {
-		POST("/touch/move", ["x": position.x, "y": position.y]);
-		return this;
-	}
-
-	auto touchScroll(string elementId, Position position) {
-		struct Body {
-			string element;
-			long xoffset;
-			long yoffset;
-		}
-
-		POST("/touch/scroll", Body(elementId, position.x, position.y));
-		return this;
-	}
-
-	auto touchScroll(Position position) {
-		POST("/touch/scroll", ["xoffset": position.x, "yoffset": position.y]);
-		return this;
-	}
-
-	auto touchDoubleClick(string elementId) {
-		POST("/touch/doubleclick", ["element": elementId]);
-		return this;
-	}
-
-	auto touchLongClick(string elementId) {
-		POST("/touch/longclick", ["element": elementId]);
-		return this;
-	}
-
-	auto touchFlick(string elementId, Position position, long speed) {
-		struct Body {
-			string element;
-			long xoffset;
-			long yoffset;
-			long speed;
-		}
-
-		POST("/touch/flick", Body(elementId, position.x, position.y, speed));
-		return this;
-	}
-
-	auto touchFlick(long xSpeed, long ySpeed) {
-		POST("/touch/flick", [ "xspeed": xSpeed, "yspeed": ySpeed ]);
-		return this;
-	}
-
-	auto geoLocation() {
-		return GET!(GeoLocation!double)("/location");
-	}
-
-	auto setGeoLocation(T)(T location) {
-		POST("/location", ["location": location]);
-		return this;
-	}
-
-	auto localStorage() {
-		return GET!(string[])("/local_storage");
-	}
-
-	auto setLocalStorage(string key, string value) {
-		POST("/local_storage", ["key": key, "value": value]);
-		return this;
-	}
-
-	auto deleteLocalStorage() {
-		DELETE("/local_storage");
-		return this;
-	}
-
-	auto localStorage(string key) {
-		return GET!(string)("/local_storage/key/" ~ key);
-	}
-
-	auto deleteLocalStorage(string key) {
-		DELETE("/local_storage/key/" ~ key);
-		return this;
-	}
-
-	auto localStorageSize() {
-		return GET!(long)("/local_storage/size");
-	}
-
-	auto sessionStorage() {
-		return GET!(string[])("/session_storage");
-	}
-
-	auto setSessionStorage(string key, string value) {
-		POST("/session_storage", ["key": key, "value": value]);
-		return this;
-	}
-
-	auto deleteSessionStorage() {
-		DELETE("/session_storage");
-		return this;
-	}
-
-	auto sessionStorage(string key) {
-		return GET!(string)("/session_storage/key/" ~ key);
-	}
-
-	auto deleteSessionStorage(string key) {
-		DELETE("/session_storage/key/" ~ key);
-		return this;
-	}
-
-	auto sessionStorageSize() {
-		return GET!(long)("/session_storage/size");
-	}
-
-	auto log(LogType logType) {
-		return POST!(LogEntry[])("/log", ["type": logType]);
-	}
+		responseSession = makeRequest(HTTPMethod.POST, serverUrl ~ "/session", ["desiredCapabilities": desiredCapabilities])
+								.deserializeJson!(SessionResponse!Capabilities).value;
 
-	auto logTypes() {
-		return GET!(string[])("/log/types");
+		connection = new immutable SeleniumApiConnection(serverUrl, responseSession.webdriver_remote_sessionid.idup);
+		api = new immutable SeleniumApi(connection);
 	}
+}
 
-	auto applicationCacheStatus() {
-		return GET!CacheStatus("/application_cache/status");
+class SeleniumApiConnection {
+	immutable {
+		string sessionId;
+		string serverUrl;
 	}
 
-	/*
-/session/:sessionId/element/:id - not yet implemented in Selenium
-
-/session/:sessionId/log/types
-/session/:sessionId/application_cache/status*/
-
-
-	auto wait(long ms) {
-		sleep(ms.msecs);
-		return this;
+	this(immutable string serverUrl, string sessionId) immutable {
+		this.sessionId = sessionId;
+		this.serverUrl = serverUrl;
 	}
-
-	void disconnect() {
-		if(isConnected) {
 
+	inout {
+		void disconnect() {
 			makeRequest(HTTPMethod.DELETE,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid);
+									serverUrl ~ "/session/" ~ sessionId);
 		}
-	}
-
-	private {
-		bool isConnected;
 
 		void DELETE(T)(string path, T values = null) {
-			if(!isConnected) connect;
-
 			makeRequest(HTTPMethod.DELETE,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
+									serverUrl ~ "/session/" ~ sessionId ~ path,
 									values);
 		}
 
 		void DELETE(string path) {
-			if(!isConnected) connect;
-
 			makeRequest(HTTPMethod.DELETE,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path);
+									serverUrl ~ "/session/" ~ sessionId ~ path);
 		}
 
 		void POST(T)(string path, T values) {
-			if(!isConnected) connect;
-
 			makeRequest(HTTPMethod.POST,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
+									serverUrl ~ "/session/" ~ sessionId ~ path,
 									values);
 		}
 
 		void POST(string path) {
-			if(!isConnected) connect;
-
 			makeRequest(HTTPMethod.POST,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path);
+									serverUrl ~ "/session/" ~ sessionId ~ path);
 		}
 
 		auto POST(U, T)(string path, T values) {
-			if(!isConnected) connect;
-
 			return makeRequest(HTTPMethod.POST,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path,
+									serverUrl ~ "/session/" ~ sessionId ~ path,
 									values).deserializeJson!(SessionResponse!U).value;
 		}
 
 		auto POST(U)(string path) {
-			if(!isConnected) connect;
-
 			return makeRequest(HTTPMethod.POST,
-									serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path)
+									serverUrl ~ "/session/" ~ sessionId ~ path)
 									.deserializeJson!(SessionResponse!U).value;
 		}
 
 		T GET(T)(string path) {
-			if(!isConnected) connect;
-
-			return makeRequest(HTTPMethod.GET, serverUrl ~ "/session/" ~ session.webdriver_remote_sessionid ~ path)
+			return makeRequest(HTTPMethod.GET, serverUrl ~ "/session/" ~ sessionId ~ path)
 									.deserializeJson!(SessionResponse!T).value;
 		}
+	}
+}
 
-		void connect() {
-			session = makeRequest(HTTPMethod.POST, serverUrl ~ "/session", ["desiredCapabilities": desiredCapabilities])
-									.deserializeJson!(SessionResponse!Capabilities).value;
+class SeleniumApi {
+	const SeleniumApiConnection connection;
 
-			isConnected = true;
+	this(inout SeleniumApiConnection connection) inout {
+		this.connection = connection;
+	}
+
+	inout {
+		auto timeouts(TimeoutType type, long ms) {
+			connection.POST("/timeouts", ["type": Json(type), "ms": Json(ms)]);
+			return this;
+		}
+
+		auto timeoutsAsyncScript(long ms) {
+			connection.POST("/timeouts/async_script", ["ms": Json(ms)]);
+			return this;
+		}
+
+		auto timeoutsImplicitWait(long ms) {
+			connection.POST("/timeouts/implicit_wait", ["ms": Json(ms)]);
+			return this;
+		}
+		auto windowHandle() {
+			return connection.GET!string("/window_handle");
+		}
+
+		auto windowHandles() {
+			return connection.GET!(string[])("/window_handles");
+		}
+
+		auto url(string url) {
+			connection.POST("/url", ["url": Json(url)]);
+			return this;
+		}
+
+		auto url() {
+			return connection.GET!string("/url");
+		}
+
+		auto forward() {
+			connection.POST("/forward");
+			return this;
+		}
+
+		auto back() {
+			connection.POST("/back");
+			return this;
+		}
+
+		auto refresh() {
+			connection.POST("/refresh");
+			return this;
+		}
+
+		auto execute(T = string)(string script, Json args = Json.emptyArray) {
+			return connection.POST!T("/execute", [ "script": Json(script), "args": args ]);
+		}
+
+		auto executeAsync(T = string)(string script, Json args = Json.emptyArray) {
+			return connection.POST!T("/execute_async", [ "script": Json(script), "args": args ]);
+		}
+
+		auto screenshot() {
+			return connection.GET!string("/screenshot");
+		}
+
+		auto imeAvailableEngines() {
+			return connection.GET!string("/ime/available_engines");
+		}
+
+		auto imeActiveEngine() {
+			return connection.GET!string("/ime/active_engine");
+		}
+
+		auto imeActivated() {
+			return connection.GET!bool("/ime/activated");
+		}
+
+		auto imeDeactivate() {
+			connection.POST("/ime/deactivate");
+			return this;
+		}
+
+		auto imeActivate(string engine) {
+			connection.POST("/ime/activate", ["engine": engine]);
+			return this;
+		}
+
+		auto frame(string id) {
+			connection.POST("/frame", ["id": id]);
+			return this;
+		}
+
+		auto frame(long id) {
+			connection.POST("/frame", ["id": id]);
+			return this;
+		}
+
+		auto frame(WebElement element) {
+			connection.POST("/frame", element);
+			return this;
+		}
+
+		auto frameParent() {
+			connection.POST("/frame/parent");
+			return this;
+		}
+
+		auto selectWindow(string name) {
+			connection.POST("/window", ["name": name]);
+			return this;
+		}
+
+		auto windowClose() {
+			connection.DELETE("/window");
+			return this;
+		}
+
+		auto windowSize(Size size) {
+			connection.POST("/window/size", size);
+			return this;
+		}
+
+		auto windowSize() {
+			return connection.GET!Size("/window/size");
+		}
+
+		auto windowMaximize() {
+			connection.POST("/window/maximize");
+			return this;
+		}
+
+		auto cookie() {
+			return connection.GET!(Cookie[])("/cookie");
+		}
+
+		auto setCookie(Cookie cookie) {
+			struct Body {
+				Cookie cookie;
+			}
+
+			connection.POST("/cookie", Body(cookie));
+			return this;
+		}
+
+		auto deleteAllCookies() {
+			connection.DELETE("/cookie");
+			return this;
+		}
+
+		auto deleteCookie(string name) {
+			connection.DELETE("/cookie/" ~ name);
+			return this;
+		}
+
+		auto source() {
+			return connection.GET!string("/source");
+		}
+
+		auto title() {
+			return connection.GET!string("/title");
+		}
+
+		auto element(ElementLocator locator) {
+			return connection.POST!WebElement("/element", locator);
+		}
+
+		auto elements(ElementLocator locator) {
+			return connection.POST!(WebElement[])("/elements", locator);
+		}
+
+		auto activeElement() {
+			return connection.POST!WebElement("/element/active");
+		}
+
+		auto elementFromElement(string initialElemId, ElementLocator locator) {
+			return connection.POST!WebElement("/element/" ~ initialElemId ~ "/element", locator);
+		}
+
+		auto elementsFromElement(string initialElemId, ElementLocator locator) {
+			return connection.POST!(WebElement[])("/element/" ~ initialElemId ~ "/elements", locator);
+		}
+
+		auto clickElement(string elementId) {
+			connection.POST("/element/" ~ elementId ~ "/click");
+			return this;
+		}
+
+		auto submitElement(string elementId) {
+			connection.POST("/element/" ~ elementId ~ "/submit");
+			return this;
+		}
+
+		auto elementText(string elementId) {
+			return connection.GET!string("/element/" ~ elementId ~ "/text");
+		}
+
+		auto sendKeys(string elementId, string[] value) {
+			struct Body {
+				string[] value;
+			}
+
+			connection.POST("/element/" ~ elementId ~ "/value", Body(value));
+			return this;
+		}
+
+		auto sendKeysToActiveElement(const(string[]) value) {
+			struct Body {
+				const(string[]) value;
+			}
+
+			connection.POST("/keys", Body(value));
+			return this;
+		}
+
+		auto elementName(string elementId) {
+			return connection.GET!string("/element/" ~ elementId ~ "/name");
+		}
+
+		auto clearElementValue(string elementId) {
+			connection.POST("/element/" ~ elementId ~ "/clear");
+			return this;
+		}
+
+		auto elementSelected(string elementId) {
+			return connection.GET!bool("/element/" ~ elementId ~ "/selected");
+		}
+
+		auto elementEnabled(string elementId) {
+			return connection.GET!bool("/element/" ~ elementId ~ "/enabled");
+		}
+
+		auto elementValue(string elementId, string attribute) {
+			return connection.GET!string("/element/" ~ elementId ~ "/attribute/" ~ attribute);
+		}
+
+		auto elementEqualsOther(string firstElementId, string secondElementId) {
+			return connection.GET!bool("/element/" ~ firstElementId ~ "/equals/" ~ secondElementId);
+		}
+
+		auto elementDisplayed(string elementId) {
+			return connection.GET!bool("/element/" ~ elementId ~ "/displayed");
+		}
+
+		auto elementLocation(string elementId) {
+			return connection.GET!Position("/element/" ~ elementId ~ "/location");
+		}
+
+		auto elementLocationInView(string elementId) {
+			return connection.GET!Position("/element/" ~ elementId ~ "/location_in_view");
+		}
+
+		auto elementSize(string elementId) {
+			return connection.GET!Size("/element/" ~ elementId ~ "/size");
+		}
+
+		auto elementCssPropertyName(string elementId, string propertyName) {
+			return connection.GET!string("/element/" ~ elementId ~ "/css/" ~ propertyName);
+		}
+
+		auto orientation() {
+			return connection.GET!Orientation("/orientation");
+		}
+
+		auto setOrientation(Orientation orientation) {
+			struct Body {
+				Orientation orientation;
+			}
+
+			return connection.POST("/orientation", Body(orientation));
+		}
+
+		auto alertText() {
+			return connection.GET!string("/alert_text");
+		}
+
+		auto setPromptText(string text) {
+			connection.POST("/alert_text", ["text": text]);
+			return this;
+		}
+
+		auto acceptAlert() {
+			connection.POST("/accept_alert");
+			return this;
+		}
+
+		auto dismissAlert() {
+			connection.POST("/dismiss_alert");
+			return this;
+		}
+
+		auto moveTo(Position position) {
+			connection.POST("/moveto", ["xoffset": position.x, "yoffset": position.y]);
+			return this;
+		}
+
+		auto moveTo(string elementId) {
+			connection.POST("/moveto", ["element": elementId]);
+			return this;
+		}
+
+		auto moveTo(string elementId, Position position) {
+			struct Body {
+				string element;
+				long xoffset;
+				long yoffset;
+			}
+
+			connection.POST("/moveto", Body(elementId, position.x, position.y));
+			return this;
+		}
+
+		auto click(MouseButton button = MouseButton.left) {
+			connection.POST("/click", ["button": button]);
+			return this;
+		}
+
+		auto buttonDown(MouseButton button = MouseButton.left) {
+			connection.POST("/buttondown", ["button": button]);
+			return this;
+		}
+
+		auto buttonUp(MouseButton button = MouseButton.left) {
+			connection.POST("/buttonup", ["button": button]);
+			return this;
+		}
+
+		auto doubleClick() {
+			connection.POST("/doubleclick");
+			return this;
+		}
+
+		auto touchClick(string elementId) {
+			connection.POST("/touch/click", ["element": elementId]);
+			return this;
+		}
+
+		auto touchDown(Position position) {
+			connection.POST("/touch/down", ["x": position.x, "y": position.y]);
+			return this;
+		}
+
+		auto touchUp(Position position) {
+			connection.POST("/touch/up", ["x": position.x, "y": position.y]);
+			return this;
+		}
+
+		auto touchMove(Position position) {
+			connection.POST("/touch/move", ["x": position.x, "y": position.y]);
+			return this;
+		}
+
+		auto touchScroll(string elementId, Position position) {
+			struct Body {
+				string element;
+				long xoffset;
+				long yoffset;
+			}
+
+			connection.POST("/touch/scroll", Body(elementId, position.x, position.y));
+			return this;
+		}
+
+		auto touchScroll(Position position) {
+			connection.POST("/touch/scroll", ["xoffset": position.x, "yoffset": position.y]);
+			return this;
+		}
+
+		auto touchDoubleClick(string elementId) {
+			connection.POST("/touch/doubleclick", ["element": elementId]);
+			return this;
+		}
+
+		auto touchLongClick(string elementId) {
+			connection.POST("/touch/longclick", ["element": elementId]);
+			return this;
+		}
+
+		auto touchFlick(string elementId, Position position, long speed) {
+			struct Body {
+				string element;
+				long xoffset;
+				long yoffset;
+				long speed;
+			}
+
+			connection.POST("/touch/flick", Body(elementId, position.x, position.y, speed));
+			return this;
+		}
+
+		auto touchFlick(long xSpeed, long ySpeed) {
+			connection.POST("/touch/flick", [ "xspeed": xSpeed, "yspeed": ySpeed ]);
+			return this;
+		}
+
+		auto geoLocation() {
+			return connection.GET!(GeoLocation!double)("/location");
+		}
+
+		auto setGeoLocation(T)(T location) {
+			connection.POST("/location", ["location": location]);
+			return this;
+		}
+
+		auto localStorage() {
+			return connection.GET!(string[])("/local_storage");
+		}
+
+		auto setLocalStorage(string key, string value) {
+			connection.POST("/local_storage", ["key": key, "value": value]);
+			return this;
+		}
+
+		auto deleteLocalStorage() {
+			connection.DELETE("/local_storage");
+			return this;
+		}
+
+		auto localStorage(string key) {
+			return connection.GET!(string)("/local_storage/key/" ~ key);
+		}
+
+		auto deleteLocalStorage(string key) {
+			connection.DELETE("/local_storage/key/" ~ key);
+			return this;
+		}
+
+		auto localStorageSize() {
+			return connection.GET!(long)("/local_storage/size");
+		}
+
+		auto sessionStorage() {
+			return connection.GET!(string[])("/session_storage");
+		}
+
+		auto setSessionStorage(string key, string value) {
+			connection.POST("/session_storage", ["key": key, "value": value]);
+			return this;
+		}
+
+		auto deleteSessionStorage() {
+			connection.DELETE("/session_storage");
+			return this;
+		}
+
+		auto sessionStorage(string key) {
+			return connection.GET!(string)("/session_storage/key/" ~ key);
+		}
+
+		auto deleteSessionStorage(string key) {
+			connection.DELETE("/session_storage/key/" ~ key);
+			return this;
+		}
+
+		auto sessionStorageSize() {
+			return connection.GET!(long)("/session_storage/size");
+		}
+
+		auto log(LogType logType) {
+			return connection.POST!(LogEntry[])("/log", ["type": logType]);
+		}
+
+		auto logTypes() {
+			return connection.GET!(string[])("/log/types");
+		}
+
+		auto applicationCacheStatus() {
+			return connection.GET!CacheStatus("/application_cache/status");
+		}
+
+		/*
+	/session/:sessionId/element/:id - not yet implemented in Selenium
+
+	/session/:sessionId/log/types
+	/session/:sessionId/application_cache/status*/
+
+
+		auto wait(long ms) {
+			sleep(ms.msecs);
+			return this;
 		}
 	}
 }
