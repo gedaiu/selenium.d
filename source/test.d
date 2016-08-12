@@ -6,7 +6,7 @@ import vibe.data.json;
 
 import std.datetime;
 
-unittest {
+unittest {/+
   auto url1 = "https://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
   auto url2 = "https://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
@@ -184,5 +184,5 @@ unittest {
 
   //session.applicationCacheStatus();
 
-  connector.connection.disconnect;
+  connector.connection.disconnect;+/
 }

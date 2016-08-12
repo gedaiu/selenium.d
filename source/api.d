@@ -348,6 +348,7 @@ class SeleniumApi {
 			connection.POST("/timeouts/implicit_wait", ["ms": Json(ms)]);
 			return this;
 		}
+
 		auto windowHandle() {
 			return connection.GET!string("/window_handle");
 		}
