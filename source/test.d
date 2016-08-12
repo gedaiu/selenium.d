@@ -6,11 +6,12 @@ import vibe.data.json;
 
 import std.datetime;
 
-unittest {/+
-  auto url1 = "http://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
-  auto url2 = "http://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
+unittest {
+  auto url1 = "https://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
+  auto url2 = "https://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
-  auto session = new SeleniumApi("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
+  auto connector = new SeleniumApiConnector("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
+  auto session = connector.api;
 
   session.timeouts(TimeoutType.script, 10_000);
   session.timeouts(TimeoutType.implicit, 10_000);
@@ -183,5 +184,5 @@ unittest {/+
 
   //session.applicationCacheStatus();
 
-  session.disconnect;+/
+  connector.connection.disconnect;
 }

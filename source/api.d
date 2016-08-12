@@ -837,6 +837,8 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 		}
 	);
 
+	writeln("RESULT: ", result);
+
 	return result;
 }
 
@@ -867,5 +869,6 @@ private Json makeRequest(HTTPMethod method, string path) {
 		}
 	);
 
+	writeln("RESULT: ", result);
 	return result;
 }
