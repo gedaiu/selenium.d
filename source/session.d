@@ -349,6 +349,11 @@ class Element
 			return this;
 		}
 
+		inout(Element) sendKeys(string value)
+		{
+			return sendKeys([value]);
+		}
+
 		inout(Element) clear()
 		{
 			api.clearElementValue(element.ELEMENT);
@@ -424,7 +429,7 @@ class Element
 		}
 	}
 }
-
+/+
 @("Session find one element")
 unittest
 {
@@ -449,3 +454,4 @@ unittest
 
 	session.close;
 }
++/
