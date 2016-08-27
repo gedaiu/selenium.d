@@ -219,6 +219,39 @@ struct ElementLocator {
 	string value;
 }
 
+
+ElementLocator classLocator(string name) {
+	return ElementLocator(LocatorStrategy.ClassName, name);
+}
+
+ElementLocator cssLocator(string name) {
+	return ElementLocator(LocatorStrategy.CssSelector, name);
+}
+
+ElementLocator idLocator(string name) {
+	return ElementLocator(LocatorStrategy.Id, name);
+}
+
+ElementLocator nameLocator(string name) {
+	return ElementLocator(LocatorStrategy.Name, name);
+}
+
+ElementLocator linkTextLocator(string name) {
+	return ElementLocator(LocatorStrategy.LinkText, name);
+}
+
+ElementLocator partialLinkTextLocator(string name) {
+	return ElementLocator(LocatorStrategy.PartialLinkText, name);
+}
+
+ElementLocator tagLocator(string name) {
+	return ElementLocator(LocatorStrategy.TagName, name);
+}
+
+ElementLocator xpathLocator(string name) {
+	return ElementLocator(LocatorStrategy.XPath, name);
+}
+
 struct WebElement {
 	string ELEMENT;
 }
@@ -819,8 +852,6 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 	Json result;
 	bool done = false;
 
-	logInfo("REQUEST: %s %s %s", method, path, data.serializeToJson.toPrettyString);
-
 	requestHTTP(path,
 		(scope req) {
 			req.method = method;
@@ -831,14 +862,10 @@ private Json makeRequest(T)(HTTPMethod method, string path, T data) {
 
 			if(res.statusCode == 500) {
 				throw new SeleniumException(result);
-			} else {
-				logInfo("Response: %d %s", res.statusCode, result.toPrettyString);
 			}
 			done = true;
 		}
 	);
-
-	writeln("RESULT: ", result);
 
 	return result;
 }
@@ -852,8 +879,6 @@ private Json makeRequest(HTTPMethod method, string path) {
 	Json result;
 	bool done = false;
 
-	logInfo("REQUEST: %s %s", method, path);
-
 	requestHTTP(path,
 		(scope req) {
 			req.method = method;
@@ -863,13 +888,9 @@ private Json makeRequest(HTTPMethod method, string path) {
 
 			if(res.statusCode == 500) {
 				throw new SeleniumException(result);
-			} else {
-				logInfo("Response: %d %s", res.statusCode, result.toPrettyString);
 			}
 			done = true;
 		}
 	);
-
-	writeln("RESULT: ", result);
 	return result;
 }

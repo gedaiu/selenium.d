@@ -10,9 +10,23 @@ import std.algorithm.searching;
 import selenium.session;
 import selenium.api;
 
+import std.string;
+import std.conv;
+
+import vibe.core.log;
 
 class SeleniumPage {
+	protected {
+		immutable SeleniumSession session;
+	}
 
+	this(immutable SeleniumSession session) {
+		this.session = session;
+	}
+
+	bool isPresent() {
+		return true;
+	}
 }
 
 
@@ -23,7 +37,39 @@ class WorkflowCheck(T, U) : Workflow!(T, U) {
 	}
 
 	auto opDispatch(string name, T...)(T props) if(name != "define") {
-		return this;
+		alias member = child.opDispatch!name;
+
+		static if(is(ReturnType!member == bool)) {
+			assert(child.opDispatch!name(props), "Check `" ~ name ~ "`` faield.");
+			return this;
+		} else {
+			auto val = child.opDispatch!name(props);
+
+			return new WorkflowCheck!(typeof(val), void*)(val, null);
+		}
+	}
+}
+
+class WorkflowNamed(string workflowName, T ,U) : Workflow!(T, U) {
+
+	this(T child, U cls) {
+		super(child, cls);
+	}
+
+	auto opDispatch(string name, T...)(T props) if(name != "define" && name != "hasStep") {
+		static if(workflowName == name) {
+			return new Workflow!(typeof(this), U)(this, cls);
+		} else {
+			return super.opDispatch!name(props);
+		}
+	}
+
+	bool hasStep(string name)() {
+		static if(workflowName == name) {
+			return true;
+		} else {
+			return child.hasStep!name;
+		}
 	}
 }
 
@@ -50,11 +96,9 @@ class Workflow(T, U) {
 		return this;
 	}
 
-	private bool hasStep(string name)() {
-		static if(!is(U == void*)) {
-			static if(__traits(hasMember, cls, name)) {
-				return true;
-			}
+	public bool hasStep(string name)() {
+		static if(!is(U == void*) && __traits(hasMember, cls, name)) {
+			return true;
 		} else static if(!is(T == void*)) {
 			return child.hasStep!name;
 		} else {
@@ -63,6 +107,8 @@ class Workflow(T, U) {
 	}
 
 	auto check()() {
+		logInfo("=> check");
+
 		static if(is(T == void*)) {
 			assert(false, "Can not check void workflows.");
 		} else static if(!__traits(isSame, TemplateOf!(T), WorkflowCheck)) {
@@ -72,12 +118,30 @@ class Workflow(T, U) {
 		}
 	}
 
-	auto opDispatch(string name, T...)(T props) if(name != "define" ) {
+	auto opDispatch(string name, T...)(T props) if(name != "define" && name != "hasStep") {
 		enforce(hasStep!name, "The step `" ~ name ~ "` is undefined.");
+
+		string stringParams = "";
+
+		static if(T.length == 0) {
+			logInfo("=> " ~ name);
+		} else {
+			foreach(prop; props) {
+				stringParams ~= " " ~ prop.to!string;
+			}
+
+			logInfo("=> " ~ name ~ ":" ~ stringParams);
+		}
 
 		static if(!is(U == void*)) {
 			static if(__traits(hasMember, cls, name)) {
-				alias finalProps = AliasSeq!(session, props);
+				alias expectedParam = Parameters!(__traits(getMember, cls, name));
+
+				static if(expectedParam.length == props.length + 1 && is(expectedParam[0] == typeof(session))) {
+					alias finalProps = AliasSeq!(session, props);
+				} else {
+					alias finalProps = props;
+				}
 
 				static if(is(ReturnType!(__traits(getMember, cls, name)) == void)) {
 					__traits(getMember, cls, name)(finalProps);
@@ -97,14 +161,12 @@ auto define(immutable SeleniumSession session) {
 }
 
 auto define(string name, T, U)(T workflow, U obj) {
-	return workflow;
+	return new WorkflowNamed!(name, T, U)(workflow, obj);
 }
 
 auto define(T, U)(T workflow, U obj) {
 	return new Workflow!(T, U)(workflow, obj);
 }
-
-
 
 @("some workflow examples")
 unittest
@@ -134,23 +196,29 @@ unittest
 		}
 	}
 
-	SeleniumPage productPage = new SeleniumPage();
+	class ProductPage : SeleniumPage {
+		this(immutable SeleniumSession session) {
+			super(session);
+		}
+
+		override bool isPresent() {
+			return session.findOne("#title".cssLocator).text.indexOf("Maggy London Women's") != -1;
+		}
+	}
+
+	SeleniumPage productPage = new ProductPage(session);
 
 	auto workflow = define(session).define!"productPage"(productPage).define(new Steps);
 
 	workflow
 		.goTo("https://www.amazon.com")
-		.search("Maggy London Womens")
+		.opDispatch!"search"("Maggy London Womens")
 		.selectResultNumber(2)
-		.check
-			.productPage
-				.isPresent;
+		.opDispatch!"productPage".check.isPresent;
 
-	workflow
+	auto chk = workflow
 		.goTo("https://www.amazon.com")
 		.search("Maggy London Womens")
 		.selectFirstResult
-			.check
-				.productPage
-					.isPresent;
+		.check.productPage.isPresent;
 }
