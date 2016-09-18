@@ -2,6 +2,7 @@ module selenium.session;
 
 import selenium.api;
 import std.stdio;
+import vibe.data.json;
 
 immutable class SeleniumSession
 {

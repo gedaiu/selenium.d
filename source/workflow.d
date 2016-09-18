@@ -7,8 +7,12 @@ import std.exception;
 import std.traits;
 import std.meta;
 import std.algorithm.searching;
+import std.algorithm.iteration;
+import std.range;
+
 import selenium.session;
 import selenium.api;
+
 
 import std.string;
 import std.conv;
@@ -28,7 +32,6 @@ class SeleniumPage {
 		return true;
 	}
 }
-
 
 class WorkflowCheck(T, U) : Workflow!(T, U) {
 
@@ -91,12 +94,7 @@ class Workflow(T, U) {
 		}
 	}
 
-	auto goTo(string url) {
-		session.navigation.url = url;
-		return this;
-	}
-
-	public bool hasStep(string name)() {
+	bool hasStep(string name)() {
 		static if(!is(U == void*) && __traits(hasMember, cls, name)) {
 			return true;
 		} else static if(!is(T == void*)) {
@@ -118,9 +116,7 @@ class Workflow(T, U) {
 		}
 	}
 
-	auto opDispatch(string name, T...)(T props) if(name != "define" && name != "hasStep") {
-		enforce(hasStep!name, "The step `" ~ name ~ "` is undefined.");
-
+	private void logDispatch(string name, T...)(T props) {
 		string stringParams = "";
 
 		static if(T.length == 0) {
@@ -132,26 +128,50 @@ class Workflow(T, U) {
 
 			logInfo("=> " ~ name ~ ":" ~ stringParams);
 		}
+	}
 
-		static if(!is(U == void*)) {
-			static if(__traits(hasMember, cls, name)) {
-				alias expectedParam = Parameters!(__traits(getMember, cls, name));
+	private auto callClassMember(string name, T...)(T props) {
+		alias expectedParam = Parameters!(__traits(getMember, cls, name));
 
-				static if(expectedParam.length == props.length + 1 && is(expectedParam[0] == typeof(session))) {
-					alias finalProps = AliasSeq!(session, props);
-				} else {
-					alias finalProps = props;
-				}
+		enum diffParameters = expectedParam.length - props.length;
 
-				static if(is(ReturnType!(__traits(getMember, cls, name)) == void)) {
-					__traits(getMember, cls, name)(finalProps);
-					return this;
-				} else {
-					return __traits(getMember, cls, name)(finalProps);
-				}
-			} else static if(!is(T == void*)) {
-				return child.opDispatch!name(props);
+		static assert(diffParameters <= 2, "Can not call `" ~ name ~ "` due invalid number of parameters");
+
+		static if(diffParameters) {
+			assert(is(expectedParam[0] == typeof(session)) || is(expectedParam[0] == typeof(this)),
+				"First parameter expected of type `immutable SeleniumSession` or `Workflow`");
+
+			static if(is(expectedParam[0] == typeof(session))) {
+				alias prepend = AliasSeq!(session);
+			} else {
+				alias prepend = AliasSeq!(this);
 			}
+		} else {
+			alias prepend = AliasSeq!();
+		}
+
+		alias finalProps = AliasSeq!(prepend, props);
+
+		static if(is(ReturnType!(__traits(getMember, cls, name)) == void)) {
+			__traits(getMember, cls, name)(finalProps);
+			return this;
+		} else {
+			return __traits(getMember, cls, name)(finalProps);
+		}
+	}
+
+	auto opDispatch(string name, T...)(T props) if(name != "define" && name != "hasStep") {
+		enforce(hasStep!name, "The step `" ~ name ~ "` is undefined.");
+		logDispatch!name(props);
+
+		static assert(!is(U == void*) && !is(T == void*), "Can not call method `" ~ name ~ "` on `void` child and class.");
+
+		enum classHasMember = __traits(hasMember, cls, name);
+
+		static if(classHasMember) {
+			return callClassMember!name(props);
+		} else static if(!is(T == void*)) {
+			return child.opDispatch!name(props);
 		}
 	}
 }
@@ -166,6 +186,62 @@ auto define(string name, T, U)(T workflow, U obj) {
 
 auto define(T, U)(T workflow, U obj) {
 	return new Workflow!(T, U)(workflow, obj);
+}
+
+class WebNavigation {
+	void goTo(immutable SeleniumSession session, string url) {
+		session.navigation.url = url;
+	}
+}
+
+struct HistoryCue(T) {
+	alias E = ReturnType!T;
+
+	private {
+		immutable SeleniumSession session;
+		T callback;
+		E result;
+
+		ulong index = 0;
+
+		string expectedUrl;
+	}
+
+	this(immutable SeleniumSession session, T callback) {
+		this.session = session;
+		this.callback = callback;
+
+		this.expectedUrl = session.navigation.url;
+		this.result = callback(session, index);
+	}
+
+	E front() {
+		return result;
+	}
+
+	E moveFront() {
+		return result;
+	}
+
+	void popFront() {
+		index++;
+
+		while(this.expectedUrl != session.navigation.url) {
+			session.navigation.back;
+		}
+
+		writeln("pop front ", session.navigation.url);
+
+		result = callback(session, index);
+	}
+
+	bool empty() {
+		return result is null;
+	}
+}
+
+auto historyCue(T)(immutable SeleniumSession session, T callback) {
+	return HistoryCue!T(session, callback);
 }
 
 @("some workflow examples")
@@ -194,6 +270,41 @@ unittest
 		void selectFirstResult(immutable SeleniumSession session) {
 			selectResultNumber(session, 0);
 		}
+
+		auto eachResult(immutable SeleniumSession session) {
+			return session.historyCue(&this.getResult);
+		}
+
+		auto getResult(immutable SeleniumSession session, ulong index) {
+			auto list = session.findMany("li.s-result-item a.s-access-detail-page".cssLocator);
+
+			if(index >= list.length) {
+				return null;
+			}
+
+			auto element = list[index];
+			auto position = element.position;
+
+			session.currentWindow.execute("window.scrollTo(" ~ position.x.to!string ~ "," ~ position.y.to!string ~ ")");
+			element.click;
+
+			class ResultPage {
+				private immutable SeleniumSession session;
+
+				this(immutable SeleniumSession session) {
+					this.session = session;
+
+					writeln("Result Page " , session.navigation.url);
+				}
+
+				string getTitle() {
+					writeln("get title ", session.findOne("productTitle".idLocator).text);
+					return session.findOne("productTitle".idLocator).text;
+				}
+			}
+
+			return new ResultPage(session);
+		}
 	}
 
 	class ProductPage : SeleniumPage {
@@ -208,17 +319,30 @@ unittest
 
 	SeleniumPage productPage = new ProductPage(session);
 
-	auto workflow = define(session).define!"productPage"(productPage).define(new Steps);
+	auto workflow = define(session)
+										.define!"productPage"(productPage)
+										.define(new Steps)
+										.define(new WebNavigation);
+/*
+	workflow
+		.opDispatch!"goTo"("https://www.amazon.com")
+		.opDispatch!"search"("Maggy London Womens")
+		.selectResultNumber(2)
+		.productPage
+			.check
+				.isPresent;
 
 	workflow
 		.goTo("https://www.amazon.com")
-		.opDispatch!"search"("Maggy London Womens")
-		.selectResultNumber(2)
-		.opDispatch!"productPage".check.isPresent;
-
-	auto chk = workflow
-		.goTo("https://www.amazon.com")
 		.search("Maggy London Womens")
 		.selectFirstResult
-		.check.productPage.isPresent;
+		.check
+			.productPage.isPresent;*/
+
+		workflow
+			.goTo("https://www.amazon.com")
+			.search("Maggy London Womens")
+			.eachResult
+				.map!(a => a.getTitle.canFind("Maggy London Women's"))
+				.reduce!((a, b) => a && b);
 }
