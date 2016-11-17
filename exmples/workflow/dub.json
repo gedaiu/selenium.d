@@ -1,0 +1,31 @@
+{
+	"name": "workflow",
+	"targetType": "executable",
+	"targetPath": "bin",
+	"authors": [
+		"Szabo Bogdan"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2016, Szabo Bogdan",
+	"license": "MIT",
+
+	"dependencies": {
+		"selenium-d": {
+			"path": "../../"
+		}
+	},
+
+	"configurations": [
+		{ "name": "executable" },
+		{
+			"name": "unittest",
+			"targetType": "executable",
+			"preBuildCommands": ["dub run unit-threaded -c gen_ut_main -- -f bin/ut.d"],
+			"mainSourceFile": "bin/ut.d",
+			"excludedSourceFiles": ["src/main.d"],
+			"dependencies": {
+				"unit-threaded": "~>0.7.0"
+			}
+		}
+	]
+}
