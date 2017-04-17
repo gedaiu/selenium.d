@@ -103,8 +103,6 @@ class Workflow(T, U) {
 	}
 
 	auto check()() {
-		logInfo("=> check");
-
 		static if(is(T == void*)) {
 			assert(false, "Can not check void workflows.");
 		} else static if(!__traits(isSame, TemplateOf!(T), WorkflowCheck)) {
@@ -118,13 +116,13 @@ class Workflow(T, U) {
 		string stringParams = "";
 
 		static if(T.length == 0) {
-			logInfo("=> " ~ name);
+			//logInfo("=> " ~ name);
 		} else {
 			foreach(prop; props) {
 				stringParams ~= " " ~ prop.to!string;
 			}
 
-			logInfo("=> " ~ name ~ ":" ~ stringParams);
+			//logInfo("=> " ~ name ~ ":" ~ stringParams);
 		}
 	}
 
@@ -249,15 +247,13 @@ void isFalse(bool value, string message = "The value is not `false`") {
 	assert(!value, message);
 }
 
-@("some workflow examples")
-unittest
-{
-	auto session = new immutable SeleniumSession("http://127.0.0.1:4444/wd/hub",
-			Capabilities.chrome);
+version(unittest) {
+	import trial.step;
 
 	class Steps {
 		void search(immutable SeleniumSession session, string value)
 		{
+			auto step = Step("Search " ~ value);
 			session.findOne(ElementLocator(LocatorStrategy.Id,
 					"twotabsearchtextbox")).click.sendKeys(value);
 
@@ -267,12 +263,14 @@ unittest
 
 		void selectResultNumber(immutable SeleniumSession session, int index)
 		{
+			auto step = Step("Select result number " ~ index.to!string);
 			session.findMany(ElementLocator(LocatorStrategy.CssSelector,
 					"li.s-result-item"))[index].findOne(ElementLocator(LocatorStrategy.CssSelector,
 					"a.s-access-detail-page")).click;
 		}
 
 		void selectFirstResult(immutable SeleniumSession session) {
+			auto step = Step("Select the first result");
 			selectResultNumber(session, 0);
 		}
 
@@ -281,6 +279,8 @@ unittest
 		}
 
 		auto getResult(immutable SeleniumSession session, ulong index) {
+			auto step = Step("Get result " ~ index.to!string);
+
 			auto list = session.findMany("li.s-result-item a.s-access-detail-page".cssLocator);
 
 			if(index >= list.length) {
@@ -298,12 +298,10 @@ unittest
 
 				this(immutable SeleniumSession session) {
 					this.session = session;
-
-					writeln("Result Page " , session.navigation.url);
 				}
 
 				string getTitle() {
-					writeln("get title ", session.findOne("productTitle".idLocator).text);
+					auto step = Step("get title: " ~ session.findOne("productTitle".idLocator).text);
 					return session.findOne("productTitle".idLocator).text;
 				}
 			}
@@ -322,29 +320,52 @@ unittest
 		}
 	}
 
-	SeleniumPage productPage = new ProductPage(session);
+	auto getWorkflow(immutable SeleniumSession session) {
+		SeleniumPage productPage = new ProductPage(session);
 
-	auto workflow = define(session)
-										.define!"productPage"(productPage)
-										.define(new Steps)
-										.define(new WebNavigation);
+		return define(session)
+											.define!"productPage"(productPage)
+											.define(new Steps)
+											.define(new WebNavigation);
+	}
+}
 
-	workflow
-		.opDispatch!"goTo"("https://www.amazon.com")
-		.opDispatch!"search"("Maggy London Womens")
+@("Check the second result on amazon.com")
+unittest {
+	auto session = new immutable SeleniumSession("http://127.0.0.1:4444/wd/hub",
+			Capabilities.chrome);
+	scope(exit) session.close;
+
+	getWorkflow(session)
+		.goTo("https://www.amazon.com")
+		.search("Maggy London Womens")
 		.selectResultNumber(2)
 		.productPage
 			.check
 				.isPresent;
+}
 
-	workflow
+@("Check the first result on amazon.com")
+unittest {
+	auto session = new immutable SeleniumSession("http://127.0.0.1:4444/wd/hub",
+			Capabilities.chrome);
+	scope(exit) session.close;
+
+	getWorkflow(session)
 		.goTo("https://www.amazon.com")
 		.search("Maggy London Womens")
 		.selectFirstResult
 		.check
 			.productPage.isPresent;
+}
 
-		workflow
+@("Check all the results from amazon.com")
+unittest {
+	auto session = new immutable SeleniumSession("http://127.0.0.1:4444/wd/hub",
+			Capabilities.chrome);
+	scope(exit) session.close;
+
+	getWorkflow(session)
 			.goTo("https://www.amazon.com")
 			.search("Maggy London Womens")
 			.eachResult

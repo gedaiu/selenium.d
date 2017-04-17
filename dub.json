@@ -5,7 +5,11 @@
 	"authors": ["Szabo Bogdan"],
 
 	"dependencies": {
-		"vibe-d": "~>0.7.27-alpha.2"
+		"vibe-d": "~>0.7.27-alpha.2",
+		"consoled": "~>1.0.4",
+		"trial:lifecycle": {
+			"path": "../trial"
+		}
 	},
 
 	"versions": ["VibeCustomMain"]

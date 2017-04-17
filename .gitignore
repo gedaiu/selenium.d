@@ -15,3 +15,6 @@ selenium.dproj
 selenium-d
 
 *.DS_Store
+/generated.d
+/libselenium-d.a
+/selenium-d-test-library

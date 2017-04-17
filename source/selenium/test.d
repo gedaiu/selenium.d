@@ -6,10 +6,14 @@ import vibe.data.json;
 
 import std.datetime;
 
-unittest {/+
+@("Test the selenium api implementation")
+unittest {
+	import trial.step;
+
   auto url1 = "https://www.amazon.com/All-Light-We-Cannot-See/dp/1476746583/";
   auto url2 = "https://www.amazon.com/The-Boys-Boat-Americans-Olympics/dp/0143125478/";
 
+  Step("driver connection");
   auto connector = new SeleniumApiConnector("http://127.0.0.1:4444/wd/hub", Capabilities.chrome);
   auto session = connector.api;
 
@@ -17,15 +21,19 @@ unittest {/+
   session.timeouts(TimeoutType.implicit, 10_000);
   session.timeouts(TimeoutType.pageLoad, 10_000);
 
+  Step("window handle");
   string handle = session.windowHandle;
   writeln("windowHandle: ",  handle);
   writeln("windowHandles: ", session.windowHandles);
 
+  Step("navigation");
   assert(session.url(url1).url == url1);
   assert(session.url(url1).wait(1000).url(url2).back.wait(1000).url == url1);
   assert(session.forward.wait(1000).url == url2);
   assert(session.refresh.wait(1000).url == url2);
 
+
+  Step("Javascript execution");
   assert(session.execute!int("return 1+1") == 2);
 
   Json params = Json.emptyArray;
@@ -36,6 +44,8 @@ unittest {/+
   assert(session.executeAsync!int("arguments[0](1+1)") == 2);
   assert(session.executeAsync!int("arguments[2](arguments[0] + arguments[1])", params) == 3);
 
+
+  Step("screenshot");
   session.screenshot;
 
   /* not suported by chrome
@@ -46,11 +56,13 @@ unittest {/+
   writeln("active_engine: ", session.imeActivate);
   */
 
+  Step("frames");
   session.frame(1);
   //session.frameParent;
   //session.selectWindow("testOpen");
   //session.windowClose();
 
+  Step("windows");
   assert(session.windowSize(Size(400, 500)).windowSize == Size(400, 500));
 
   session.windowMaximize;
@@ -58,16 +70,20 @@ unittest {/+
 
   assert(session.cookie.length > 0);
 
+  Step("cookies");
   auto cookie = Cookie("test", "value");
   session.setCookie(cookie);
   session.deleteCookie("test");
   session.deleteAllCookies;
 
+
+  Step("source");
   assert(session.source != "");
 
   session.url("http://wfmu.org/playlists/LM");
   assert(session.title == "WFMU: This Is The Modern World with Trouble: Playlists and Archives");
 
+  Step("selectors");
   auto elem = ElementLocator(LocatorStrategy.ClassName, "ui-dialog");
   session.element(elem);
 
@@ -131,6 +147,8 @@ unittest {/+
   //session.setOrientation(Orientation.landscape);
   //assert(session.orientation == Orientation.landscape);
 
+
+  Step("alerts");
   session.executeAsync!string(`prompt("Please enter your name");`);
   session.wait(1000);
   session.setPromptText("test").acceptAlert;
@@ -161,11 +179,13 @@ unittest {/+
   session.touchFlick(idElem9, Position(200, 200), 10);
   session.touchFlick(100, 100);*/
 
+  Step("geolocation");
   session.setGeoLocation(GeoLocation!double(12.3, 13.3, 34.4));
 
   //Web driver bug. It does not work.
   //session.geoLocation();
 
+  Step("local storage");
   session.setLocalStorage("key1", "val1");
   session.localStorage();
   session.localStorage("key1");
@@ -184,5 +204,5 @@ unittest {/+
 
   //session.applicationCacheStatus();
 
-  connector.connection.disconnect;+/
+  connector.connection.disconnect;
 }

@@ -439,7 +439,7 @@ class Element
 		}
 	}
 }
-/+
+
 @("Session find one element")
 unittest
 {
@@ -464,4 +464,3 @@ unittest
 
 	session.close;
 }
-+/
