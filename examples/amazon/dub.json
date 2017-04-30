@@ -1,0 +1,17 @@
+{
+	"name": "amazon-test",
+	"targetType": "library",
+	"targetPath": "bin",
+	"authors": [
+		"Szabo Bogdan"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2016, Szabo Bogdan",
+	"license": "MIT",
+
+	"dependencies": {
+		"selenium-d": {
+			"path": "../../"
+		}
+	}
+}
