@@ -89,8 +89,6 @@ auto getWorkflow(immutable SeleniumSession session) {
 										.define(new WebNavigation);
 }
 
-
-
 @("Check the second result on amazon.com")
 unittest {
 	auto session = new immutable SeleniumSession("http://127.0.0.1:4444/wd/hub",

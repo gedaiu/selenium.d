@@ -18,3 +18,5 @@ selenium-d
 /generated.d
 /libselenium-d.a
 /selenium-d-test-library
+bin
+generated.d
