@@ -20,3 +20,6 @@ selenium-d
 /selenium-d-test-library
 bin
 generated.d
+allure
+allure-html
+coverage

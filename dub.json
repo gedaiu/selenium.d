@@ -5,8 +5,8 @@
 	"authors": ["Szabo Bogdan"],
 
 	"dependencies": {
-		"vibe-d": "~>0.7.27-alpha.2",
-		"consoled": "~>1.0.4",
+		"vibe-d": "*",
+		"arsd-official:terminal": "~>1.2.0",
 		"trial:lifecycle": {
 			"path": "../trial"
 		}
