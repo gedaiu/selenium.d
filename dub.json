@@ -3,6 +3,7 @@
 	"description": "D Selenium bindings",
 	"copyright": "Copyright © 2015, Szabo Bogdan",
 	"authors": ["Szabo Bogdan"],
+	"license": "MIT",
 
 	"dependencies": {
 		"vibe-d": "*",
