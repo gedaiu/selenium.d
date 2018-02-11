@@ -1,12 +1,15 @@
 {
 	"reporters": [
 		"allure",
-		"spec",
-		"result"
+		"spec-progress",
+		"result",
+		"stats"
 	],
+
 	"testDiscovery": [
 		"trial.discovery.unit.UnitTestDiscovery"
 	],
-	"runInParallel": false,
-	"maxThreads": 0
+
+	"runInParallel": true,
+	"maxThreads": 1
 }

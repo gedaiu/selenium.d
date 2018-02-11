@@ -23,3 +23,7 @@ generated.d
 allure
 allure-html
 coverage
+.trial/
+trial-root
+trial-stats.csv
+trial_root.d

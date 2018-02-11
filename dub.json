@@ -6,10 +6,7 @@
 
 	"dependencies": {
 		"vibe-d": "*",
-		"arsd-official:terminal": "~>1.2.0",
-		"trial:lifecycle": {
-			"path": "../trial"
-		}
+		"trial:lifecycle": "~>0.6.1"
 	},
 
 	"versions": ["VibeCustomMain"]
